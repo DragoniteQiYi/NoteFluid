@@ -49,14 +49,16 @@ namespace NoteFluid.Core
             services.AddSingleton<ConfigService>();
 
             // 注册ViewModel
-            services.AddSingleton<MainViewModel>();
-            services.AddSingleton<FileViewModel>();
+            services.AddTransient<MainViewModel>();
+            services.AddTransient<FileViewModel>();
+            services.AddTransient<VisualizationViewModel>();
 
             // 注册窗口/页面
             services.AddTransient<MainWindow>();
             services.AddTransient<MainMenu>();
             services.AddTransient<Settings>();
             services.AddTransient<FileList>();
+            services.AddTransient<MidiVisualization>();
         }
 
         protected override void OnStartup(StartupEventArgs e)

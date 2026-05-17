@@ -23,6 +23,7 @@ namespace NoteFluid.Core.Services
                 "MainMenu" => _serviceProvider.GetRequiredService<MainMenu>(),
                 "Settings" => _serviceProvider.GetRequiredService<Settings>(),
                 "FileList" => _serviceProvider.GetRequiredService<FileList>(),
+                "MidiVisualization" => _serviceProvider.GetRequiredService<MidiVisualization>(),
                 _ => throw new ArgumentException($"未知页面: {pageName}")
             };
 

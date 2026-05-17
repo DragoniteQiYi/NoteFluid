@@ -1,11 +1,17 @@
-﻿using Melanchall.DryWetMidi.Core;
-using System.IO;
+﻿using System.IO;
 
 namespace NoteFluid.Core.Services
 {
     public class FileService
     {
         private readonly string _midiFolderPath;
+        private FileInfo _selectedFile;
+
+        public FileInfo SelectedFile
+        {
+            get => _selectedFile;
+            set => _selectedFile = value;
+        }
 
         public FileService()
         {

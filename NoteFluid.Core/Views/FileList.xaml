@@ -41,11 +41,10 @@
 
                     <!-- 最左侧：返回菜单按钮 -->
                     <Button Grid.Column="0" 
-                Style="{StaticResource MaterialDesignIconForegroundButton}"
-                ToolTip="返回菜单"
-                HorizontalAlignment="Left"
-                Click="BackToMenuButton_Click"
-                            >
+                        Style="{StaticResource MaterialDesignIconForegroundButton}"
+                        ToolTip="返回菜单"
+                        HorizontalAlignment="Left"
+                        Click="BackToMenuButton_Click">
                         <materialDesign:PackIcon Kind="ArrowLeft" 
                                      Width="24" 
                                      Height="24"/>

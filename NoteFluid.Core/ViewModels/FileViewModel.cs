@@ -262,6 +262,10 @@ namespace NoteFluid.Core.ViewModels
         private void HandleSelectedFileChanged()
         {
             _midiService?.StopMidiFile();
+            if (SelectedFile != null)
+            {
+                _fileService.SelectedFile = SelectedFile;
+            } 
             CanPlayOrStop = false;
             IsPlaying = false;
             _playIconKind = PackIconKind.Play;

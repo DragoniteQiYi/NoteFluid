@@ -41,7 +41,7 @@ namespace NoteFluid.Core.Views
 
         private void ContinueButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("该功能正在开发中", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            _fileViewModel.NavigateTo("MidiVisualization");
         }
 
         private void FileListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

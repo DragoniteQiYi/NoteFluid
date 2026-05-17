@@ -8,6 +8,7 @@
         xmlns:materialDesign="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         Title="NoteFluid" Height="800" Width="1200"
+        MinHeight="800" MinWidth="1200"
         WindowState="Maximized">
     <Window.Resources>
         <ResourceDictionary>
