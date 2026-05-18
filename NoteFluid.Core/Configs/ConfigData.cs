@@ -3,5 +3,7 @@
     public class ConfigData
     {
         public ThemeConfig? Theme { get; set; }
+
+        public VisualizationConfig? Visualization { get; set; }
     }
 }
