@@ -1,12 +1,12 @@
-﻿using NoteFluid.Core.Services;
-using System;
-using System.Collections.Generic;
+﻿using CommunityToolkit.Mvvm.Input;
+using NoteFluid.Core.Models;
+using NoteFluid.Core.Services;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace NoteFluid.Core.ViewModels
@@ -14,28 +14,33 @@ namespace NoteFluid.Core.ViewModels
     public class VisualizationViewModel : INotifyPropertyChanged
     {
         private readonly NavigateService _navigateService;
+        private readonly ConfigService _configService;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        // 88键钢琴从A0开始 (MIDI音符21)
         private const int START_MIDI_NOTE = 21;
         private const int TOTAL_KEYS = 88;
         private const int WHITE_KEY_COUNT = 52;
-        private const int BLACK_KEY_COUNT = 36;
-
-        // 基准尺寸
-        private const double BASE_WHITE_KEY_WIDTH = 19.23;  // 1000/52
         private const double BASE_WHITE_KEY_HEIGHT = 130;
-        private const double BASE_BLACK_KEY_WIDTH = 12;
         private const double BASE_BLACK_KEY_HEIGHT = 80;
 
-        // 键盘序列 - 从A0开始
         private readonly string[] keyboardNoteSequence =
             { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
 
-        public VisualizationViewModel(NavigateService navigateService)
+        // 新增：钢琴键集合
+        public ObservableCollection<PianoKey> PianoKeys { get; private set; }
+        public ObservableCollection<PianoKey> WhiteKeys { get; private set; }
+        public ObservableCollection<PianoKey> BlackKeys { get; private set; }
+
+        public VisualizationViewModel(NavigateService navigateService,
+            ConfigService configService)
         {
             _navigateService = navigateService;
+            _configService = configService;
+
+            PianoKeys = [];
+            WhiteKeys = [];
+            BlackKeys = [];
         }
 
         public void NavigateTo(string pageName)
@@ -43,24 +48,26 @@ namespace NoteFluid.Core.ViewModels
             _navigateService.Navigate(pageName);
         }
 
-        public void DrawPiano(Canvas pianoCanvas, double actualWidth)
+        // 生成所有钢琴键数据
+        public void GeneratePianoKeys(double availableWidth)
         {
-            pianoCanvas.Children.Clear();
-
-            // 获取可用宽度
-            double availableWidth = actualWidth - 40; // 减去边距
             if (availableWidth <= 0) availableWidth = 1000;
 
-            // 根据可用宽度计算白键宽度
+            PianoKeys.Clear();
+            WhiteKeys.Clear();
+            BlackKeys.Clear();
+
             double whiteKeyWidth = availableWidth / WHITE_KEY_COUNT;
-            double whiteKeyHeight = BASE_WHITE_KEY_HEIGHT;
             double blackKeyWidth = whiteKeyWidth * 0.6;
-            double blackKeyHeight = BASE_BLACK_KEY_HEIGHT;
 
-            // 更新Canvas基准宽度（Viewbox会根据这个缩放）
-            pianoCanvas.Width = availableWidth;
+            bool showPitchName = false;
+            bool showOctave = false;
+            if (_configService?.ConfigData?.Visualization != null)
+            {
+                showPitchName = _configService.ConfigData.Visualization.ShowPitchName;
+                showOctave = _configService.ConfigData.Visualization.ShowOctave;
+            }
 
-            // 第一遍：绘制所有白键
             int whiteKeyIndex = 0;
 
             for (int i = 0; i < TOTAL_KEYS; i++)
@@ -68,129 +75,285 @@ namespace NoteFluid.Core.ViewModels
                 int midiNote = START_MIDI_NOTE + i;
                 int sequenceIndex = i % 12;
                 string noteName = keyboardNoteSequence[sequenceIndex];
+                int octave = GetOctaveNumber(midiNote);
+                bool isBlack = noteName.Contains('#');
 
-                // 判断是否为白键
-                if (!noteName.Contains("#"))
+                var key = new PianoKey
                 {
-                    // 创建白键
-                    var whiteKey = new Border
-                    {
-                        Width = whiteKeyWidth,
-                        Height = whiteKeyHeight,
-                        Background = new SolidColorBrush(Colors.White),
-                        BorderBrush = new SolidColorBrush(Colors.Black),
-                        BorderThickness = new Thickness(1),
-                        CornerRadius = new CornerRadius(0, 0, 3, 3),
-                        Tag = midiNote
-                    };
+                    MidiNote = midiNote,
+                    NoteName = noteName,
+                    Octave = octave,
+                    IsBlackKey = isBlack,
+                };
 
-                    // 添加音名标签（只在键足够宽时显示）
-                    if (whiteKeyWidth > 15)
-                    {
-                        int octave = GetOctaveNumber(midiNote);
-                        var label = new TextBlock
-                        {
-                            Text = $"{noteName}{octave}",
-                            FontSize = Math.Max(6, whiteKeyWidth * 0.4),
-                            Foreground = new SolidColorBrush(Colors.Gray),
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Bottom,
-                            Margin = new Thickness(0, 0, 0, 8)
-                        };
-
-                        var grid = new Grid();
-                        grid.Children.Add(label);
-                        whiteKey.Child = grid;
-                    }
-
-                    // 定位白键
-                    Canvas.SetLeft(whiteKey, whiteKeyIndex * whiteKeyWidth);
-                    Canvas.SetTop(whiteKey, 5);
-                    pianoCanvas.Children.Add(whiteKey);
-
-                    whiteKeyIndex++;
-                }
-            }
-
-            // 第二遍：绘制黑键
-            whiteKeyIndex = 0;
-
-            for (int i = 0; i < TOTAL_KEYS; i++)
-            {
-                int midiNote = START_MIDI_NOTE + i;
-                int sequenceIndex = i % 12;
-                string noteName = keyboardNoteSequence[sequenceIndex];
-
-                if (!noteName.Contains("#"))
+                if (!isBlack)
                 {
-                    // 白键，增加计数
+                    // 白键
+                    key.Width = whiteKeyWidth;
+                    key.Height = BASE_WHITE_KEY_HEIGHT;
+                    key.X = whiteKeyIndex * whiteKeyWidth;
+                    key.Y = 5;
+
+                    if (showPitchName)
+                        key.DisplayText = $"{noteName}{octave}";
+                    else if (noteName == "C" && showOctave)
+                        key.DisplayText = $"C{octave}";
+
+                    WhiteKeys.Add(key);
                     whiteKeyIndex++;
                 }
                 else
                 {
-                    // 计算黑键位置
-                    double blackKeyX = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
+                    // 黑键
+                    key.Width = blackKeyWidth;
+                    key.Height = BASE_BLACK_KEY_HEIGHT;
+                    key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
+                    key.Y = 5;
 
-                    // 创建黑键
-                    var blackKey = new Border
-                    {
-                        Width = blackKeyWidth,
-                        Height = blackKeyHeight,
-                        Background = new SolidColorBrush(Colors.Black),
-                        BorderBrush = new SolidColorBrush(Colors.Black),
-                        BorderThickness = new Thickness(1),
-                        CornerRadius = new CornerRadius(0, 0, 3, 3),
-                        Tag = midiNote
-                    };
+                    if (showPitchName)
+                        key.DisplayText = $"{noteName}{octave}";
 
-                    // 添加音名标签（只在键足够宽时显示）
-                    if (blackKeyWidth > 10)
-                    {
-                        int octave = GetOctaveNumber(midiNote);
-                        var label = new TextBlock
-                        {
-                            Text = $"{noteName}{octave}",
-                            FontSize = Math.Max(5, blackKeyWidth * 0.4),
-                            Foreground = new SolidColorBrush(Colors.White),
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            VerticalAlignment = VerticalAlignment.Bottom,
-                            Margin = new Thickness(0, 0, 0, 5)
-                        };
-
-                        var grid = new Grid();
-                        grid.Children.Add(label);
-                        blackKey.Child = grid;
-                    }
-
-                    // 定位黑键
-                    Canvas.SetLeft(blackKey, blackKeyX);
-                    Canvas.SetTop(blackKey, 5);
-                    Canvas.SetZIndex(blackKey, 1);  // 黑键置于白键之上
-                    pianoCanvas.Children.Add(blackKey);
+                    BlackKeys.Add(key);
                 }
+
+                // 为每个键创建命令
+                int capturedMidiNote = midiNote;
+                key.KeyClickCommand = new RelayCommand(() =>
+                {
+                    Debug.WriteLine($"Button点击 - MIDI音符: {capturedMidiNote}");
+                    OnKeyClicked(capturedMidiNote);
+                });
+
+                PianoKeys.Add(key);
             }
         }
 
-        private double CalculateBlackKeyPosition(int whiteKeyIndex, string noteName, double whiteKeyWidth, double blackKeyWidth)
+        // 保留原有的 DrawPiano 方法，添加点击事件处理
+        public void DrawPiano(Canvas pianoCanvas, double actualWidth)
         {
-            var
-                // C# 位于 C 和 D 之间
-                position = noteName switch
+            pianoCanvas.Children.Clear();
+
+            double availableWidth = actualWidth - 40;
+            if (availableWidth <= 0) availableWidth = 1000;
+
+            GeneratePianoKeys(availableWidth);
+
+            pianoCanvas.Width = availableWidth;
+
+            // 绘制白键
+            foreach (var whiteKey in WhiteKeys)
+            {
+                var keyBorder = CreateWhiteKeyBorder(whiteKey);
+                Canvas.SetLeft(keyBorder, whiteKey.X);
+                Canvas.SetTop(keyBorder, whiteKey.Y);
+                pianoCanvas.Children.Add(keyBorder);
+            }
+
+            // 绘制黑键
+            foreach (var blackKey in BlackKeys)
+            {
+                var keyBorder = CreateBlackKeyBorder(blackKey);
+                Canvas.SetLeft(keyBorder, blackKey.X);
+                Canvas.SetTop(keyBorder, blackKey.Y);
+                Canvas.SetZIndex(keyBorder, blackKey.ZIndex);
+                pianoCanvas.Children.Add(keyBorder);
+            }
+        }
+
+        // 创建白键边框（添加点击事件）
+        private Border CreateWhiteKeyBorder(PianoKey key)
+        {
+            var border = new Border
+            {
+                Width = key.Width,
+                Height = key.Height,
+                Background = key.IsPressed ?
+                    new SolidColorBrush(Colors.LightGray) :
+                    new SolidColorBrush(Colors.White),
+                BorderBrush = new SolidColorBrush(Colors.Black),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(0, 0, 3, 3),
+                Tag = key.MidiNote,
+                Cursor = Cursors.Hand  // 添加手型光标
+            };
+
+            // 添加鼠标事件处理
+            int capturedMidiNote = key.MidiNote;
+            border.MouseLeftButtonDown += (s, e) =>
+            {
+                Debug.WriteLine($"白键被点击 - MIDI音符: {capturedMidiNote}");
+                OnKeyClicked(capturedMidiNote);
+                e.Handled = true;
+            };
+
+            // 鼠标进入时高亮
+            border.MouseEnter += (s, e) =>
+            {
+                if (!key.IsPressed)
                 {
-                    "C#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,// C# 位于 C 和 D 之间
-                    "D#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,// D# 位于 D 和 E 之间
-                    "F#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,// F# 位于 F 和 G 之间
-                    "G#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,// G# 位于 G 和 A 之间
-                    "A#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,// A# 位于 A 和 B 之间
-                    _ => whiteKeyIndex * whiteKeyWidth,
+                    border.Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
+                }
+            };
+
+            // 鼠标离开时恢复
+            border.MouseLeave += (s, e) =>
+            {
+                if (!key.IsPressed)
+                {
+                    border.Background = new SolidColorBrush(Colors.White);
+                }
+            };
+
+            if (!string.IsNullOrEmpty(key.DisplayText))
+            {
+                var label = new TextBlock
+                {
+                    Text = key.DisplayText,
+                    FontSize = Math.Max(6, key.Width * 0.4),
+                    Foreground = new SolidColorBrush(Colors.Gray),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 0, 8),
+                    IsHitTestVisible = false  // 让点击事件穿透到 Border
                 };
-            return position;
+
+                var grid = new Grid();
+                grid.Children.Add(label);
+                border.Child = grid;
+            }
+
+            return border;
+        }
+
+        // 创建黑键边框（添加点击事件）
+        private Border CreateBlackKeyBorder(PianoKey key)
+        {
+            var border = new Border
+            {
+                Width = key.Width,
+                Height = key.Height,
+                Background = key.IsPressed ?
+                    new SolidColorBrush(Colors.DarkGray) :
+                    new SolidColorBrush(Colors.Black),
+                BorderBrush = new SolidColorBrush(Colors.Black),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(0, 0, 3, 3),
+                Tag = key.MidiNote,
+                Cursor = Cursors.Hand  // 添加手型光标
+            };
+
+            // 添加鼠标事件处理
+            int capturedMidiNote = key.MidiNote;
+            border.MouseLeftButtonDown += (s, e) =>
+            {
+                Debug.WriteLine($"黑键被点击 - MIDI音符: {capturedMidiNote}");
+                OnKeyClicked(capturedMidiNote);
+                e.Handled = true;
+            };
+
+            // 鼠标进入时高亮
+            border.MouseEnter += (s, e) =>
+            {
+                if (!key.IsPressed)
+                {
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x40, 0x40));
+                }
+            };
+
+            // 鼠标离开时恢复
+            border.MouseLeave += (s, e) =>
+            {
+                if (!key.IsPressed)
+                {
+                    border.Background = new SolidColorBrush(Colors.Black);
+                }
+            };
+
+            if (!string.IsNullOrEmpty(key.DisplayText))
+            {
+                var label = new TextBlock
+                {
+                    Text = key.DisplayText,
+                    FontSize = Math.Max(5, key.Width * 0.4),
+                    Foreground = new SolidColorBrush(Colors.White),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 0, 5),
+                    IsHitTestVisible = false  // 让点击事件穿透到 Border
+                };
+
+                var grid = new Grid();
+                grid.Children.Add(label);
+                border.Child = grid;
+            }
+
+            return border;
+        }
+
+        // 按键按下事件处理
+        public void PressKey(int midiNote)
+        {
+            var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
+            if (key != null)
+            {
+                key.IsPressed = true;
+                Debug.WriteLine($"按键按下: {key.NoteName}{key.Octave}");
+                // 手动绘制的 UI 需要通过重新绘制来更新
+                // 如果需要实时更新，可以触发重绘事件
+            }
+        }
+
+        // 按键释放事件处理
+        public void ReleaseKey(int midiNote)
+        {
+            var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
+            if (key != null)
+            {
+                key.IsPressed = false;
+                Debug.WriteLine($"按键释放: {key.NoteName}{key.Octave}");
+                // 手动绘制的 UI 需要通过重新绘制来更新
+            }
+        }
+
+        private double CalculateBlackKeyPosition(int whiteKeyIndex, string noteName,
+            double whiteKeyWidth, double blackKeyWidth)
+        {
+            return noteName switch
+            {
+                "C#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
+                "D#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
+                "F#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
+                "G#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,
+                "A#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,
+                _ => whiteKeyIndex * whiteKeyWidth,
+            };
         }
 
         private int GetOctaveNumber(int midiNote)
         {
-            // A0 = MIDI 21
             return (midiNote - 12) / 12;
+        }
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void OnKeyClicked(int midiNote)
+        {
+            Debug.WriteLine($"=== OnKeyClicked 被调用 ===");
+            Debug.WriteLine($"MIDI音符: {midiNote}");
+
+            var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
+            if (key != null)
+            {
+                Debug.WriteLine($"找到琴键: {key.NoteName}{key.Octave}, 黑键: {key.IsBlackKey}");
+                PressKey(midiNote);
+            }
+            else
+            {
+                Debug.WriteLine($"错误：未找到 MIDI 音符 {midiNote} 对应的琴键");
+            }
         }
     }
 }

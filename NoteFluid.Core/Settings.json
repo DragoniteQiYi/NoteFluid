@@ -4,8 +4,8 @@
     "ColorIndex": 1
   },
   "Visualization": {
-    "ShowPitchName": true,
-    "ShowOctave": false,
+    "ShowPitchName": false,
+    "ShowOctave": true,
     "FallingSpeed": 1
   }
 }

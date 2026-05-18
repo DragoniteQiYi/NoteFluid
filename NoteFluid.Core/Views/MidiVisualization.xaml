@@ -5,71 +5,24 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:NoteFluid.Core.Views"
       xmlns:views="clr-namespace:NoteFluid.Core.Views"
+      xmlns:converters="clr-namespace:NoteFluid.Core.Converters"
+      xmlns:models="clr-namespace:NoteFluid.Core.Models"
+      xmlns:vm="clr-namespace:NoteFluid.Core.ViewModels"
       xmlns:materialDesign="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
       mc:Ignorable="d" 
+      d:DataContext="{d:DesignInstance Type=vm:VisualizationViewModel}"
       d:DesignHeight="800" d:DesignWidth="1200"
       Title="MidiVisualization">
 
     <Page.Resources>
-        <!-- 白键样式 -->
-        <Style x:Key="WhiteKeyStyle" TargetType="Button">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Height" Value="120"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="Black"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="0,0,-1,0"/>
-            <Setter Property="VerticalAlignment" Value="Bottom"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="0,0,3,3"
-                                Margin="0,0,-1,0">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Bottom"
-                                            Margin="0,0,0,5"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#FFE0E0E0"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- 黑键样式 -->
-        <Style x:Key="BlackKeyStyle" TargetType="Button">
-            <Setter Property="Width" Value="16"/>
-            <Setter Property="Height" Value="75"/>
-            <Setter Property="Background" Value="Black"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="Black"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="0,0,3,3">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Bottom"
-                                            Margin="0,0,0,5"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#FF404040"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <!-- 转换器 -->
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"
+                                         TrueBrush="#FFE0E0E0"
+                                         FalseBrush="White"/>
+        <converters:BoolToBrushConverter x:Key="BlackKeyBrushConverter"
+                                         TrueBrush="#FF404040"
+                                         FalseBrush="Black"/>
     </Page.Resources>
 
     <Grid Background="{DynamicResource MaterialDesignPaper}">
@@ -80,7 +33,7 @@
         </Grid.RowDefinitions>
 
         <!-- 顶部功能区 -->
-            <Grid Grid.Row="0">
+        <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -97,8 +50,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 最左侧：返回菜单按钮 -->
-                    <!-- 最左侧：返回菜单按钮 -->
+                    <!-- 返回菜单按钮 -->
                     <Button Grid.Column="0" 
                         Style="{StaticResource MaterialDesignIconForegroundButton}"
                         ToolTip="返回菜单"
@@ -108,18 +60,15 @@
                             Width="24" 
                             Height="24"/>
                     </Button>
-
                 </Grid>
             </Border>
             <Border Grid.Row="1" Background="{DynamicResource MaterialDesignPaper}">
                 <Slider x:Name="Progress" Minimum="0" Maximum="1"
-                        VerticalAlignment="Center">
-                    
-                </Slider>
+                        VerticalAlignment="Center"/>
             </Border>
         </Grid>
 
-        <!-- 钢琴键盘 - 底部区域 -->
+        <!-- 钢琴键盘 - 底部区域（纯 Canvas，不使用 ItemsControl）-->
         <Border Grid.Row="2" 
                 Background="#FF2D2D2D"
                 BorderBrush="Black"
@@ -128,8 +77,9 @@
             <Viewbox Stretch="Fill">
                 <Canvas x:Name="PianoCanvas" 
                         Height="140" 
-                        Width="1000">
-                    <!-- 基准宽度，Viewbox会自动缩放 -->
+                        Width="1000"
+                        Background="Transparent">
+                    <!-- 所有琴键由代码手动绘制 -->
                 </Canvas>
             </Viewbox>
         </Border>

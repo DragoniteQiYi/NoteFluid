@@ -12,6 +12,8 @@ namespace NoteFluid.Core.Services
         private readonly string _filePath;
         private readonly ConfigData _configData;
 
+        public event Action<ConfigData>? OnConfigChanged;
+
         public ConfigData ConfigData
         {
             get => _configData;
@@ -190,6 +192,7 @@ namespace NoteFluid.Core.Services
         public void Save()
         {
             Write(_configData);
+            OnConfigChanged?.Invoke(ConfigData);
         }
 
         private void EnsureDirectoryExists()
