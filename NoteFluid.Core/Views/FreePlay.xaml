@@ -1,0 +1,145 @@
+﻿<Page x:Class="NoteFluid.Core.Views.FreePlay"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:NoteFluid.Core.Views"
+      xmlns:views="clr-namespace:NoteFluid.Core.Views"
+      xmlns:converters="clr-namespace:NoteFluid.Core.Converters"
+      xmlns:models="clr-namespace:NoteFluid.Core.Models"
+      xmlns:vm="clr-namespace:NoteFluid.Core.ViewModels"
+      xmlns:materialDesign="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
+      mc:Ignorable="d" 
+      d:DataContext="{d:DesignInstance Type=vm:FreePlayViewModel}"
+      d:DesignHeight="800" d:DesignWidth="1200"
+      Title="FreePlay">
+    <Page.Resources>
+        <!-- 转换器 -->
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:BoolToBrushConverter x:Key="BoolToBrushConverter"
+                                     TrueBrush="#FFE0E0E0"
+                                     FalseBrush="White"/>
+        <converters:BoolToBrushConverter x:Key="BlackKeyBrushConverter"
+                                     TrueBrush="#FF404040"
+                                     FalseBrush="Black"/>
+    </Page.Resources>
+
+    <materialDesign:DrawerHost x:Name="MainDrawerHost">
+        <materialDesign:DrawerHost.RightDrawerContent>
+            <StackPanel Width="280" Margin="24" Orientation="Vertical">
+                <!-- 标题 -->
+                <TextBlock Text="显示设置" 
+                   FontSize="20" 
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   Margin="0,0,0,24"/>
+
+                <!-- 第一行设置 -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="显示音名" 
+                       Foreground="{DynamicResource MaterialDesignBody}"
+                       FontSize="16" 
+                       VerticalAlignment="Center"
+                       Grid.Column="0"/>
+                    <ToggleButton x:Name="ShowPitchNameToggle"
+                          Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                          Grid.Column="1"
+                          Checked="ShowPitchNameToggle_Checked"
+                          Unchecked="ShowPitchNameToggle_Unchecked"/>
+                </Grid>
+
+                <!-- 分割线（可选） -->
+                <Separator Margin="0,0,0,16" 
+                   Style="{StaticResource MaterialDesignLightSeparator}"/>
+
+                <!-- 第二行设置 -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="显示八度" 
+                       Foreground="{DynamicResource MaterialDesignBody}"
+                       FontSize="16" 
+                       VerticalAlignment="Center"
+                       Grid.Column="0"/>
+                    <ToggleButton x:Name="ShowOctaveNameToggle"
+                          Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                          Grid.Column="1"
+                          Checked="ShowOctaveToggle_Checked"
+                          Unchecked="ShowOctaveToggle_Unchecked"/>
+                </Grid>
+            </StackPanel>
+        </materialDesign:DrawerHost.RightDrawerContent>
+
+        <Grid Background="{DynamicResource MaterialDesignPaper}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 顶部功能区 -->
+            <Grid Grid.Row="0">
+                <Border Grid.Row="0" 
+            Padding="15" 
+            Margin="0,0,0,0"
+            BorderThickness="0,0,0,0.5"
+            Background="{DynamicResource MaterialDesign.Brush.Primary}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 返回菜单按钮 -->
+                        <Button Grid.Column="0" 
+                        Style="{StaticResource MaterialDesignIconForegroundButton}"
+                        ToolTip="返回菜单"
+                        HorizontalAlignment="Left"
+                        Click="BackToMainMenuButton_Click">
+                            <materialDesign:PackIcon Kind="ArrowLeft" 
+                        Width="24" 
+                        Height="24"/>
+                        </Button>
+
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center"
+                           Text="自由演奏" Foreground="{DynamicResource MaterialDesignBody}"
+                           FontSize="32"/>
+
+                        <!-- 新增：右侧菜单按钮 -->
+                        <Button Grid.Column="2" 
+                            Style="{StaticResource MaterialDesignIconForegroundButton}"
+                            ToolTip="菜单"
+                            Click="MenuButton_Click">
+                            <materialDesign:PackIcon Kind="Menu" 
+                                                 Width="24" 
+                                                 Height="24"/>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 钢琴键盘 - 底部区域（纯 Canvas，不使用 ItemsControl）-->
+            <Border Grid.Row="2" 
+        Background="#FF2D2D2D"
+        BorderBrush="Black"
+        BorderThickness="1"
+        Height="160">
+                <Viewbox Stretch="Fill">
+                    <Canvas x:Name="PianoCanvas" 
+                Height="140" 
+                Width="1000"
+                Background="Transparent">
+                        <!-- 所有琴键由代码手动绘制 -->
+                    </Canvas>
+                </Viewbox>
+            </Border>
+        </Grid>
+    </materialDesign:DrawerHost>
+</Page>

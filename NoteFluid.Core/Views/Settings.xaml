@@ -20,12 +20,20 @@
 
             <!-- 卡片样式 -->
             <Style x:Key="SettingsCardStyle" TargetType="Border">
-                <Setter Property="Background" Value="#15FFFFFF"/>
-                <Setter Property="BorderBrush" Value="#30FFFFFF"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="12"/>
-                <Setter Property="Padding" Value="20,15"/>
-                <Setter Property="Margin" Value="0,5"/>
+                <Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="BorderThickness" Value="0.5"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect BlurRadius="8" 
+                            ShadowDepth="2" 
+                            Opacity="0.1"
+                            Direction="270"/>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </ResourceDictionary>
     </Page.Resources>
@@ -66,383 +74,391 @@
             </Path>
         </Canvas>
 
-        <Grid Background="{DynamicResource MaterialDesignPaper}">
-            <Grid.RowDefinitions>
-                <!-- 标题区域：固定高度 -->
-                <RowDefinition Height="Auto"/>
-                <!-- 功能区：自动填充剩余空间，并垂直居中 -->
-                <RowDefinition Height="*"/>
-                <!-- 版本信息：固定高度 -->
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <materialDesign:DialogHost x:Name="RootDialogHost">
+            <materialDesign:DialogHost.DialogContent>
+                <materialDesign:Card Width="320" Padding="0" Background="Transparent">
+                    <StackPanel>
+                        <!-- 标题栏 -->
+                        <Border Background="{DynamicResource MaterialDesignPaper}" 
+                        Padding="20">
+                            <TextBlock Text="选择主题颜色" 
+                              FontSize="18" 
+                              FontWeight="SemiBold"
+                              Foreground="{DynamicResource MaterialDesignBody}"/>
+                        </Border>
 
-            <!-- 1. 标题区域 -->
-            <Border Grid.Row="0" 
-                Background="{DynamicResource MaterialDesign.Brush.Primary}"
-                Padding="20,25" BorderThickness="0,0,0,1" 
-        BorderBrush="{DynamicResource MaterialDesignPaper}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                        <!-- 颜色列表 - 点击即选择并关闭 -->
+                        <ListBox x:Name="ColorListBox"
+                                 ItemsSource="{Binding Colors}"
+                                 SelectedItem="{Binding SelectedColor}"
+                                 BorderThickness="0"
+                                 SelectionChanged="ColorListBox_SelectionChanged"
+                                 MaxHeight="300">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="16,10" CornerRadius="4" Margin="4,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" 
-           Text="NoteFluid MIDI音乐播放器"
-           FontSize="32"
-           FontWeight="Bold"
-           Foreground="{DynamicResource MaterialDesignBody}"
-           VerticalAlignment="Center"/>
+                                            <!-- 圆形颜色预览 -->
+                                            <Ellipse Grid.Column="0"
+                                            Width="36" 
+                                            Height="36" 
+                                            Fill="{Binding ColorBrush}"
+                                            Margin="0,0,16,0"/>
 
-                    <!-- 装饰性音乐图标 -->
-                    <materialDesign:PackIcon Grid.Column="1" 
-                         Kind="MusicNote" 
-                         Width="40" 
-                         Height="40" 
+                                            <!-- 颜色名称 -->
+                                            <TextBlock Grid.Column="1"
+                                              Text="{Binding Name}" 
+                                              FontSize="14"
+                                              VerticalAlignment="Center"
+                                              Foreground="{DynamicResource MaterialDesignBody}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- 底部取消按钮 -->
+                        <StackPanel Orientation="Horizontal" 
+                           HorizontalAlignment="Right" 
+                           Margin="16">
+                            <Button Content="关闭" 
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </materialDesign:Card>
+            </materialDesign:DialogHost.DialogContent>
+
+            <Grid Background="{DynamicResource MaterialDesignPaper}">
+                <Grid.RowDefinitions>
+                    <!-- 标题区域：固定高度 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 功能区：自动填充剩余空间，并垂直居中 -->
+                    <RowDefinition Height="*"/>
+                    <!-- 版本信息：固定高度 -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 1. 标题区域 -->
+                <Border Grid.Row="0" 
+            Background="{DynamicResource MaterialDesign.Brush.Primary}"
+            Padding="20,25" BorderThickness="0,0,0,1" 
+            BorderBrush="{DynamicResource MaterialDesignPaper}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+       Text="NoteFluid MIDI音乐播放器"
+       FontSize="32"
+       FontWeight="Bold"
+       Foreground="{DynamicResource MaterialDesignBody}"
+       VerticalAlignment="Center"/>
+
+                        <!-- 装饰性音乐图标 -->
+                        <materialDesign:PackIcon Grid.Column="1" 
+                     Kind="MusicNote" 
+                     Width="40" 
+                     Height="40" 
+                     Foreground="{DynamicResource MaterialDesignBody}"
+                     VerticalAlignment="Center"
+                     Margin="10,0,0,0"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="1">
+                    <!-- 居中面板容器 -->
+                    <StackPanel 
+VerticalAlignment="Center" 
+HorizontalAlignment="Center"
+Width="500">
+
+                        <!-- 标题 -->
+                        <TextBlock Text="设置" 
+                           FontSize="36" 
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,30">
+
+                        </TextBlock>
+                        <!-- 1. 声音输出设备选择 -->
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="200"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="音频输出设备" 
+                FontSize="16" 
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource MaterialDesignBody}"/>
+                                    <TextBlock 
+                Text="选择应用播放音频的输出设备" 
+                FontSize="12"
+                Foreground="{DynamicResource MaterialDesignBody}"
+                Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <ComboBox 
+            x:Name="AudioDeviceComboBox"
+            Grid.Column="1"
+            Style="{StaticResource MaterialDesignOutlinedComboBox}"
+            VerticalAlignment="Center"
+            materialDesign:HintAssist.Hint="选择设备"
+            materialDesign:TextFieldAssist.SuffixText=""
+            SelectionChanged="AudioDeviceComboBox_SelectionChanged"
+            ItemsSource="{Binding OutputDevices}"
+            SelectedItem="{Binding SelectedDevice}"
+            >
+                                    <!-- 添加 ItemContainerStyle 设置下拉项样式 -->
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+
+                                </ComboBox>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. 测试声音按钮 -->
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock 
+                Text="测试声音" 
+                FontSize="16" 
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource MaterialDesignBody}"/>
+                                    <TextBlock 
+                Text="播放Windows提示音" 
+                FontSize="12"
+                Foreground="{DynamicResource MaterialDesignBody}"
+                Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <Button 
+            x:Name="TestSoundButton"
+            Grid.Column="1"
+
+            Style="{StaticResource MaterialDesignOutlinedButton}"
+            VerticalAlignment="Center"
+            Click="TestSoundButton_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon 
+                        Kind="VolumeHigh" 
+                        Width="20" 
+                        Height="20" 
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"/>
+                                            <TextBlock Text="播放" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- 3. 黑夜模式切换 -->
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock 
+                                Text="切换黑夜模式" 
+                                FontSize="16" 
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource MaterialDesignBody}"/>
+                                    <TextBlock 
+                                Text="在浅色和深色主题之间切换" 
+                                FontSize="12"
+                                Foreground="{DynamicResource MaterialDesignBody}"
+                                Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <ToggleButton 
+                            x:Name="DarkModeToggle"
+                            Grid.Column="1"
+                            Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                            VerticalAlignment="Center"
+                            Checked="DarkModeToggle_Checked"
+                            Unchecked="DarkModeToggle_Unchecked">
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+
+                        <!-- 4. 主题颜色切换 -->
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+
+                                        <TextBlock Text="主题颜色" 
+                                      FontSize="16" 
+                                      FontWeight="SemiBold"
+                                      Foreground="{DynamicResource MaterialDesignBody}"/>
+                                    
+                                    <TextBlock Text="修改应用主题颜色" 
+                                  FontSize="12"
+                                  Foreground="{DynamicResource MaterialDesignBody}"
+                                  Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <!-- 点击打开对话框的按钮 -->
+                                <Button x:Name="ColorPickerButton"
+                            Grid.Column="1"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            VerticalAlignment="Center"
+                            Click="ColorPickerButton_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Palette" 
+                                                        Width="20" 
+                                                        Height="20" 
+                                                        Margin="0,0,8,0"
+                                                        VerticalAlignment="Center"/>
+                                            <TextBlock Text="选择颜色" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- 5. 打开MIDI文件夹按钮 -->
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock 
+                Text="MIDI 文件夹" 
+                FontSize="16" 
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource MaterialDesignBody}"/>
+                                    <TextBlock 
+                Text="打开本地MIDI文件夹" 
+                FontSize="12"
+                Foreground="{DynamicResource MaterialDesignBody}"
+                Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <Button 
+            x:Name="OpenMidiFolderButton"
+            Grid.Column="1"
+
+            Style="{StaticResource MaterialDesignOutlinedButton}"
+            VerticalAlignment="Center"
+            Click="OpenMidiFolderButton_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon 
+                        Kind="FolderOpen" 
+                        Width="20" 
+                        Height="20" 
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"/>
+                                            <TextBlock Text="打开文件夹" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- 6. 返回菜单按钮 -->
+                        <Border Background="#15FFFFFF"
+                        BorderBrush="#30FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="0"
+                        Margin="0,20,0,0"
+                        Width="200"
+                        HorizontalAlignment="Center">
+                            <Button x:Name="BackToMenuButton"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Foreground="{DynamicResource MaterialDesignBody}"
+                            Height="45"
+                            Click="BackToMenuButton_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon 
+                                    Kind="ArrowLeft" 
+                                    Width="20" 
+                                    Height="20" 
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource MaterialDesignBody}"/>
+                                        <TextBlock Text="返回菜单" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+                <!-- 3. 版本信息区域 -->
+                <Border Grid.Row="2" 
+    Background="{DynamicResource MaterialDesignPaper}"
+    Padding="20,15" BorderThickness="0,1,0,0"
+    BorderBrush="{DynamicResource MaterialDesignPaper}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 版本信息 -->
+                        <StackPanel Grid.Column="0" 
+        Orientation="Horizontal" 
+        VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="InformationOutline" 
+                         Width="16" 
+                         Height="16" 
                          Foreground="{DynamicResource MaterialDesignBody}"
                          VerticalAlignment="Center"
-                         Margin="10,0,0,0"/>
-                </Grid>
-            </Border>
-
-            <Border Grid.Row="1">
-                <!-- 居中面板容器 -->
-                <StackPanel 
-    VerticalAlignment="Center" 
-    HorizontalAlignment="Center"
-    Width="500">
-
-                    <!-- 标题 -->
-                    <TextBlock 
-        Text="设置" 
-        FontSize="36" 
-        FontWeight="Bold"
-        Foreground="{DynamicResource MaterialDesign.Brush.Primary}"
-        HorizontalAlignment="Center"
-        Margin="0,0,0,30">
-                     
-                    </TextBlock>
-
-                    <!-- 1. 黑夜模式切换 
-    <Border Style="{StaticResource SettingsCardStyle}">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock 
-                    Text="切换黑夜模式" 
-                    FontSize="16" 
-                    FontWeight="SemiBold"
-                    Foreground="White"/>
-                <TextBlock 
-                    Text="在浅色和深色主题之间切换" 
-                    FontSize="12"
-                    Foreground="#99FFFFFF"
-                    Margin="0,2,0,0"/>
-            </StackPanel>
-
-            <ToggleButton 
-                x:Name="DarkModeToggle"
-                Grid.Column="1"
-                Style="{StaticResource MaterialDesignSwitchToggleButton}"
-                VerticalAlignment="Center"
-                Checked="DarkModeToggle_Checked"
-                Unchecked="DarkModeToggle_Unchecked"/>
-        </Grid>
-    </Border>
-    -->
-
-                    <!-- 2. 声音输出设备选择 -->
-                    <Border Style="{StaticResource SettingsCardStyle}"
-            Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="200"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock 
-                    Text="音频输出设备" 
-                    FontSize="16" 
-                    FontWeight="SemiBold"
-                    Foreground="{DynamicResource MaterialDesignBody}"/>
-                                <TextBlock 
-                    Text="选择应用播放音频的输出设备" 
-                    FontSize="12"
-                    Foreground="{DynamicResource MaterialDesignBody}"
-                    Margin="0,2,0,0"/>
-                            </StackPanel>
-
-                            <ComboBox 
-                x:Name="AudioDeviceComboBox"
-                Grid.Column="1"
-                Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                VerticalAlignment="Center"
-                Foreground="{DynamicResource MaterialDesignBody}"
-                materialDesign:HintAssist.Hint="选择设备"
-                materialDesign:TextFieldAssist.SuffixText=""
-                SelectionChanged="AudioDeviceComboBox_SelectionChanged"
-                ItemsSource="{Binding OutputDevices}"
-                SelectedItem="{Binding SelectedDevice}"
-                >
-                                <!-- 添加 ItemContainerStyle 设置下拉项样式 -->
-                                <ComboBox.ItemContainerStyle>
-                                    <Style TargetType="ComboBoxItem">
-                                        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
-                                    </Style>
-                                </ComboBox.ItemContainerStyle>
-
-                            </ComboBox>
-                        </Grid>
-                    </Border>
-
-                    <!-- 3. 测试声音按钮 -->
-                    <Border Style="{StaticResource SettingsCardStyle}"
-            Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock 
-                    Text="测试声音" 
-                    FontSize="16" 
-                    FontWeight="SemiBold"
-                    Foreground="{DynamicResource MaterialDesignBody}"/>
-                                <TextBlock 
-                    Text="播放Windows提示音" 
-                    FontSize="12"
-                    Foreground="{DynamicResource MaterialDesignBody}"
-                    Margin="0,2,0,0"/>
-                            </StackPanel>
-
-                            <Button 
-                x:Name="TestSoundButton"
-                Grid.Column="1"
-
-                Style="{StaticResource MaterialDesignOutlinedButton}"
-                VerticalAlignment="Center"
-                Foreground="{DynamicResource MaterialDesignBody}"
-                Click="TestSoundButton_Click">
-                                <Button.Content>
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon 
-                            Kind="VolumeHigh" 
-                            Width="20" 
-                            Height="20" 
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Center"/>
-                                        <TextBlock Text="播放" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button.Content>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- 1. 黑夜模式切换 -->
-                    <Border Style="{StaticResource SettingsCardStyle}"
-            Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock 
-                                    Text="切换黑夜模式" 
-                                    FontSize="16" 
-                                    FontWeight="SemiBold"
-                                    Foreground="{DynamicResource MaterialDesignBody}"/>
-                                <TextBlock 
-                                    Text="在浅色和深色主题之间切换" 
-                                    FontSize="12"
-                                    Foreground="{DynamicResource MaterialDesignBody}"
-                                    Margin="0,2,0,0"/>
-                            </StackPanel>
-
-                            <ToggleButton 
-                                x:Name="DarkModeToggle"
-                                Grid.Column="1"
-                                Style="{StaticResource MaterialDesignSwitchToggleButton}"
-                                VerticalAlignment="Center"
-                                Checked="DarkModeToggle_Checked"
-                                Unchecked="DarkModeToggle_Unchecked">
-                            </ToggleButton>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingsCardStyle}"
-            Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock 
-                    Text="主题颜色" 
-                    FontSize="16" 
-                    FontWeight="SemiBold"
-                    Foreground="{DynamicResource MaterialDesignBody}"/>
-                                <TextBlock 
-                    Text="修改应用主题颜色" 
-                    FontSize="12"
-                    Foreground="{DynamicResource MaterialDesignBody}"
-                    Margin="0,2,0,0"/>
-                            </StackPanel>
-
-                            <materialDesign:PopupBox x:Name="ColorPopupBox"
-                Grid.Column="1" PlacementMode="BottomAndAlignCentres">
-                                <ListBox 
-                    ItemsSource="{Binding Colors}"
-                    SelectedItem="{Binding SelectedColor}"
-                    SelectedIndex="{Binding SelectedColorIndex}"
-                    BorderThickness="0" 
-                    VirtualizingPanel.ScrollUnit="Pixel"
-                    VirtualizingPanel.VirtualizationMode="Recycling">
-
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Vertical">
-                                                <Rectangle 
-                                    Width="32" 
-                                    Height="32" 
-                                    Fill="{Binding ColorBrush}" 
-                                    RadiusX="2" 
-                                    RadiusY="2" 
-                                    Margin="0,0,8,0"/>
-                                                <TextBlock 
-                                    Text="{Binding Name}" 
-                                    VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </materialDesign:PopupBox>
-                        </Grid>
-                    </Border>
-
-                    <!-- 4. 打开MIDI文件夹按钮 -->
-                    <Border Style="{StaticResource SettingsCardStyle}"
-            Background="{DynamicResource MaterialDesign.Brush.Primary}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock 
-                    Text="MIDI 文件夹" 
-                    FontSize="16" 
-                    FontWeight="SemiBold"
-                    Foreground="{DynamicResource MaterialDesignBody}"/>
-                                <TextBlock 
-                    Text="打开本地MIDI文件夹" 
-                    FontSize="12"
-                    Foreground="{DynamicResource MaterialDesignBody}"
-                    Margin="0,2,0,0"/>
-                            </StackPanel>
-
-                            <Button 
-                x:Name="OpenMidiFolderButton"
-                Grid.Column="1"
-
-                Style="{StaticResource MaterialDesignOutlinedButton}"
-                VerticalAlignment="Center"
-                Foreground="{DynamicResource MaterialDesignBody}"
-                Click="OpenMidiFolderButton_Click">
-                                <Button.Content>
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon 
-                            Kind="FolderOpen" 
-                            Width="20" 
-                            Height="20" 
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Center"/>
-                                        <TextBlock Text="打开文件夹" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button.Content>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- 5. 返回菜单按钮 -->
-                    <Border Background="#15FFFFFF"
-                            BorderBrush="#30FFFFFF"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Padding="0"
-                            Margin="0,20,0,0"
-                            Width="200"
-                            HorizontalAlignment="Center">
-                        <Button x:Name="BackToMenuButton"
-                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Foreground="{DynamicResource MaterialDesignBody}"
-                                Height="45"
-                                Click="BackToMenuButton_Click">
-                            <Button.Content>
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon 
-                                        Kind="ArrowLeft" 
-                                        Width="20" 
-                                        Height="20" 
-                                        Margin="0,0,8,0"
-                                        VerticalAlignment="Center"
-                                        Foreground="{DynamicResource MaterialDesignBody}"/>
-                                    <TextBlock Text="返回菜单" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button.Content>
-                        </Button>
-                    </Border>
-
-                </StackPanel>
-            </Border>
-            <!-- 3. 版本信息区域 -->
-            <Border Grid.Row="2" 
-        Background="{DynamicResource MaterialDesignPaper}"
-        Padding="20,15" BorderThickness="0,1,0,0"
-        BorderBrush="{DynamicResource MaterialDesignPaper}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- 版本信息 -->
-                    <StackPanel Grid.Column="0" 
-            Orientation="Horizontal" 
-            VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="InformationOutline" 
-                             Width="16" 
-                             Height="16" 
-                             Foreground="{DynamicResource MaterialDesignBody}"
-                             VerticalAlignment="Center"
-                             Margin="0,0,8,0"/>
-                        <TextBlock Text="版本 1.0.0"
-               FontSize="14"
-               Foreground="{DynamicResource MaterialDesignBody}"
-               VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- 版权信息 -->
-                    <TextBlock Grid.Column="1" 
-           Text="© 2026 NoteFluid"
-           FontSize="12"
+                         Margin="0,0,8,0"/>
+                            <TextBlock Text="版本 1.0.0"
+           FontSize="14"
            Foreground="{DynamicResource MaterialDesignBody}"
-           VerticalAlignment="Center"
-           Opacity="0.7"/>
-                </Grid>
-            </Border>
+           VerticalAlignment="Center"/>
+                        </StackPanel>
 
-        </Grid>
+                        <!-- 版权信息 -->
+                        <TextBlock Grid.Column="1" 
+       Text="© 2026 NoteFluid"
+       FontSize="12"
+       Foreground="{DynamicResource MaterialDesignBody}"
+       VerticalAlignment="Center"
+       Opacity="0.7"/>
+                    </Grid>
+                </Border>
+
+            </Grid>
+        </materialDesign:DialogHost>
     </Grid>
 </Page>

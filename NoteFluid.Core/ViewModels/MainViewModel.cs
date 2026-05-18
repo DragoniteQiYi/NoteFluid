@@ -126,7 +126,9 @@ namespace NoteFluid.Core.ViewModels
                 // 通过索引获取颜色
                 if (value >= 0 && value < Colors?.Count)
                 {
-                    SelectedColor = Colors[value];
+                    _selectedColor = Colors[value];
+                    OnPropertyChanged(nameof(SelectedColor));
+                    ChangeColor(Colors[value].Color, value);
                 }
             }
         }
@@ -137,7 +139,6 @@ namespace NoteFluid.Core.ViewModels
             set
             {
                 _selectedColor = value;
-                ChangeColor(_selectedColor.Color);
                 OnPropertyChanged();
             }
         }
@@ -177,7 +178,7 @@ namespace NoteFluid.Core.ViewModels
 
                 SelectedColorIndex = colorIndex;
                 _themeService.SetBaseTheme(baseTheme);
-                _themeService.ChangePrimaryColor(Colors[colorIndex].Color);
+                // ChangeColor(Colors[colorIndex].Color, colorIndex);
             }
         }
 
@@ -245,12 +246,12 @@ namespace NoteFluid.Core.ViewModels
             _audioService.TestOutputDevice();
         }
 
-        public void ChangeColor(Color selectedColor)
+        private void ChangeColor(Color selectedColor, int colorIndex)
         {
             _themeService.ChangePrimaryColor(selectedColor);
             if (_configService.ConfigData.Theme != null)
             {
-                _configService.ConfigData.Theme.ColorIndex = SelectedColorIndex;
+                _configService.ConfigData.Theme.ColorIndex = colorIndex;
                 _configService.Save();
             }
         }

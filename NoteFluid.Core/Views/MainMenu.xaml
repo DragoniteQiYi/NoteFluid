@@ -131,24 +131,48 @@
                     </Button>
 
                     <!-- 设置按钮 -->
-                    <Button Content="设置"
-                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    <Button Content="自由演奏"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
                             Foreground="{DynamicResource MaterialDesignBody}"
-                    Height="50"
-                    FontSize="18"
-                    Margin="0,0,0,20"
-                    Click="SettingsButton_Click"
-                    ToolTip="打开设置菜单">
+                            Height="50"
+                            FontSize="18"
+                            Margin="0,0,0,20"
+                            Click="FreePlayButton_Click"
+                            ToolTip="在虚拟键盘上自由演奏">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Settings" 
+                                    <materialDesign:PackIcon Kind="Piano" 
                                                      Width="24" 
                                                      Height="24" 
                                                      VerticalAlignment="Center" 
                                                      Margin="0,0,12,0"/>
                                     <TextBlock Text="{Binding}" 
                                        VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+
+                    <!-- 设置按钮 -->
+                    <Button Content="设置"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Foreground="{DynamicResource MaterialDesignBody}"
+                            Height="50"
+                            FontSize="18"
+                            Margin="0,0,0,20"
+                            Click="SettingsButton_Click"
+                            ToolTip="打开设置菜单">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Settings" 
+                                                            Width="24" 
+                                                            Height="24" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding}" 
+                                            VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
                         </Button.ContentTemplate>

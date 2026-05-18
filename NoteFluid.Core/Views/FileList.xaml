@@ -118,6 +118,7 @@
                             Style="{StaticResource MaterialDesignRaisedButton}"
                             ToolTip="继续"
                             HorizontalAlignment="Right"
+                            IsEnabled="{Binding CanPlay}"
                             Click="ContinueButton_Click">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="PlayCircleOutline" 

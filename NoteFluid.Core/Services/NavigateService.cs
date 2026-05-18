@@ -24,6 +24,7 @@ namespace NoteFluid.Core.Services
                 "Settings" => _serviceProvider.GetRequiredService<Settings>(),
                 "FileList" => _serviceProvider.GetRequiredService<FileList>(),
                 "MidiVisualization" => _serviceProvider.GetRequiredService<MidiVisualization>(),
+                "FreePlay" => _serviceProvider.GetRequiredService<FreePlay>(),
                 _ => throw new ArgumentException($"未知页面: {pageName}")
             };
 

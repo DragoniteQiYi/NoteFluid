@@ -37,11 +37,12 @@ namespace NoteFluid.Core.Views
         }
 
         // 当页面加载完成时初始化钢琴键
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             // 初始生成数据
             _viewModel.DrawPiano(PianoCanvas, ActualWidth);
             _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+            await _viewModel.PlayMidiFile();
         }
 
         private void PianoKey_Click(object sender, RoutedEventArgs e)

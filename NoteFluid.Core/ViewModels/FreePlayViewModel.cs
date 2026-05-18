@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using NAudio.Midi;
+using NoteFluid.Core.Command;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
 using System.Collections.ObjectModel;
@@ -11,12 +12,14 @@ using System.Windows.Media;
 
 namespace NoteFluid.Core.ViewModels
 {
-    public class VisualizationViewModel : INotifyPropertyChanged
+    public class FreePlayViewModel : INotifyPropertyChanged
     {
         private readonly NavigateService _navigateService;
         private readonly ConfigService _configService;
         private readonly MidiService _midiService;
-        private readonly FileService _fileService;
+
+        private readonly MidiPlayer _midiPlayer;
+        private readonly MidiOut _midiOut;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -33,23 +36,29 @@ namespace NoteFluid.Core.ViewModels
         public ObservableCollection<PianoKey> PianoKeys { get; private set; }
         public ObservableCollection<PianoKey> WhiteKeys { get; private set; }
         public ObservableCollection<PianoKey> BlackKeys { get; private set; }
+        public bool ShowPitchName { get; private set; }
+        public bool ShowOctave { get; private set; }
 
-        public VisualizationViewModel(NavigateService navigateService,
+        public FreePlayViewModel(NavigateService navigateService,
             ConfigService configService, MidiService midiService,
             FileService fileService)
         {
             _navigateService = navigateService;
             _configService = configService;
             _midiService = midiService;
-            _fileService = fileService;
 
             PianoKeys = [];
             WhiteKeys = [];
-            BlackKeys = [];        
+            BlackKeys = [];
+
+            _midiOut = new MidiOut(0);
+            _midiPlayer = new MidiPlayer(_midiOut);
         }
 
         public void NavigateTo(string pageName)
         {
+            _midiOut.Dispose();
+            _midiPlayer.Dispose();
             _navigateService.Navigate(pageName);
         }
 
@@ -65,12 +74,10 @@ namespace NoteFluid.Core.ViewModels
             double whiteKeyWidth = availableWidth / WHITE_KEY_COUNT;
             double blackKeyWidth = whiteKeyWidth * 0.6;
 
-            bool showPitchName = false;
-            bool showOctave = false;
             if (_configService?.ConfigData?.Visualization != null)
             {
-                showPitchName = _configService.ConfigData.Visualization.ShowPitchName;
-                showOctave = _configService.ConfigData.Visualization.ShowOctave;
+                ShowPitchName = _configService.ConfigData.Visualization.ShowPitchName;
+                ShowOctave = _configService.ConfigData.Visualization.ShowOctave;
             }
 
             int whiteKeyIndex = 0;
@@ -99,9 +106,9 @@ namespace NoteFluid.Core.ViewModels
                     key.X = whiteKeyIndex * whiteKeyWidth;
                     key.Y = 5;
 
-                    if (showPitchName)
+                    if (ShowPitchName)
                         key.DisplayText = $"{noteName}{octave}";
-                    else if (noteName == "C" && showOctave)
+                    else if (noteName == "C" && ShowOctave)
                         key.DisplayText = $"C{octave}";
 
                     WhiteKeys.Add(key);
@@ -115,7 +122,7 @@ namespace NoteFluid.Core.ViewModels
                     key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
                     key.Y = 5;
 
-                    if (showPitchName)
+                    if (ShowPitchName)
                         key.DisplayText = $"{noteName}{octave}";
 
                     BlackKeys.Add(key);
@@ -163,12 +170,6 @@ namespace NoteFluid.Core.ViewModels
                 Canvas.SetZIndex(keyBorder, blackKey.ZIndex);
                 pianoCanvas.Children.Add(keyBorder);
             }
-        }
-
-        public async Task PlayMidiFile()
-        {
-            var currentFile = _fileService.SelectedFile;
-            await _midiService.PlayMidiFile(currentFile);
         }
 
         // 创建白键边框（添加点击事件）
@@ -312,7 +313,7 @@ namespace NoteFluid.Core.ViewModels
                 // 手动绘制的 UI 需要通过重新绘制来更新
                 await Task.Run(async () =>
                 {
-                    await _midiService.PlayNoteAsync(midiNote);
+                    await _midiService.PlayNoteAsync(_midiPlayer, midiNote);
                 });
             }
         }
@@ -368,6 +369,28 @@ namespace NoteFluid.Core.ViewModels
             {
                 Debug.WriteLine($"错误：未找到 MIDI 音符 {midiNote} 对应的琴键");
             }
+        }
+
+        public void ChangePitchNameDisplay(bool state)
+        {
+            ShowPitchName = state;
+            if (_configService.ConfigData.Visualization != null)
+            {
+                _configService.ConfigData.Visualization.ShowPitchName = state;
+                _configService.Save();
+            }  
+            OnPropertyChanged(nameof(ShowPitchName));
+        }
+
+        public void ChangeOctaveDisplay(bool state)
+        {
+            ShowOctave = state;
+            if (_configService.ConfigData.Visualization != null)
+            {
+                _configService.ConfigData.Visualization.ShowOctave = state;
+                _configService.Save();
+            }
+            OnPropertyChanged(nameof(ShowOctave));
         }
     }
 }

@@ -31,6 +31,11 @@ namespace NoteFluid.Core.Views
             _mainViewModel.Navigate("FileList");
         }
 
+        private void FreePlayButton_Click(object sender, RoutedEventArgs e)
+        {
+            _mainViewModel.Navigate("FreePlay");
+        }
+
         private void ExitButton_Click(object sender, EventArgs e)
         {
             Application.Current.Shutdown();

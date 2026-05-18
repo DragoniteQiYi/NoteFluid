@@ -63,8 +63,9 @@
                 </Grid>
             </Border>
             <Border Grid.Row="1" Background="{DynamicResource MaterialDesignPaper}">
-                <Slider x:Name="Progress" Minimum="0" Maximum="1"
-                        VerticalAlignment="Center"/>
+                <ProgressBar x:Name="Progress" Minimum="0" Maximum="1"
+                             Height="20"
+                             VerticalAlignment="Center"/>
             </Border>
         </Grid>
 

@@ -38,7 +38,7 @@ namespace NoteFluid.Core
             ServiceProvider = services.BuildServiceProvider();
         }
 
-        private void ConfigureServices(IServiceCollection services)
+        private static void ConfigureServices(IServiceCollection services)
         {
             // 注册服务
             services.AddSingleton<ThemeService>();
@@ -49,16 +49,18 @@ namespace NoteFluid.Core
             services.AddSingleton<ConfigService>();
 
             // 注册ViewModel
-            services.AddTransient<MainViewModel>();
+            services.AddSingleton<MainViewModel>();
             services.AddTransient<FileViewModel>();
             services.AddTransient<VisualizationViewModel>();
-
+            services.AddTransient<FreePlayViewModel>();
+            
             // 注册窗口/页面
             services.AddTransient<MainWindow>();
             services.AddTransient<MainMenu>();
             services.AddTransient<Settings>();
             services.AddTransient<FileList>();
             services.AddTransient<MidiVisualization>();
+            services.AddTransient<FreePlay>();
         }
 
         protected override void OnStartup(StartupEventArgs e)

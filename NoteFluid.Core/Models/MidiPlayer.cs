@@ -1,5 +1,6 @@
 ﻿using NAudio.Midi;
 using System.Diagnostics;
+using System.Threading.Channels;
 
 namespace NoteFluid.Core.Models
 {
@@ -7,13 +8,13 @@ namespace NoteFluid.Core.Models
     {
         private readonly MidiFile _midiFile;
         private readonly MidiOut _midiOut;
-        private System.Timers.Timer _timer;
+        private System.Timers.Timer? _timer;
         private int _currentEventIndex;
         private List<MidiEvent> _events;
         private int _currentTick;
         private bool _isPlaying;
         private bool _isPaused;
-        private Stopwatch _stopwatch;
+        private Stopwatch? _stopwatch;
         private double _pausedElapsedMs;
         private int[] _activeNotes;
         private double _totalDurationMs;
@@ -26,10 +27,15 @@ namespace NoteFluid.Core.Models
 
         public event Action? OnPlaybackCompleted;
 
+        public MidiPlayer(MidiOut midiOut)
+        {
+            _midiOut = midiOut;
+        }
+
         public MidiPlayer(MidiFile midiFile, MidiOut midiOut)
         {
-            this._midiFile = midiFile;
-            this._midiOut = midiOut;
+            _midiFile = midiFile;
+            _midiOut = midiOut;
 
             Console.WriteLine($"[MidiPlayer] 构造函数开始");
             Console.WriteLine($"[MidiPlayer] DeltaTicksPerQuarterNote: {midiFile.DeltaTicksPerQuarterNote}");
@@ -111,7 +117,7 @@ namespace NoteFluid.Core.Models
             _pausedElapsedMs = 0;
             _isPlaying = true;
             _isPaused = false;
-            _stopwatch.Restart();
+            _stopwatch?.Restart();
 
             Console.WriteLine($"[MidiPlayer] 状态设置完成 - isPlaying={_isPlaying}, isPaused={_isPaused}");
 
@@ -127,7 +133,7 @@ namespace NoteFluid.Core.Models
 
             _isPaused = true;
             _timer?.Stop();
-            _stopwatch.Stop();
+            _stopwatch?.Stop();
 
             _pausedElapsedMs += _stopwatch.Elapsed.TotalMilliseconds;
             _stopwatch.Reset();
@@ -140,7 +146,7 @@ namespace NoteFluid.Core.Models
             if (!_isPlaying || !_isPaused) return;
 
             _isPaused = false;
-            _stopwatch.Restart();
+            _stopwatch?.Restart();
 
             StartTimer();
         }
@@ -156,7 +162,7 @@ namespace NoteFluid.Core.Models
             _isPlaying = false;
             _isPaused = false;
             _timer?.Stop();
-            _stopwatch.Reset();
+            _stopwatch?.Reset();
             _currentTick = 0;
             _pausedElapsedMs = 0;
         }
@@ -184,7 +190,7 @@ namespace NoteFluid.Core.Models
             Debug.WriteLine($"[MidiPlayer] CalculateTickFromMs({positionMs:F2}) = {calculatedTick}");
 
             // 验证逆运算
-            double backToMs = CalculateMsFromTick(calculatedTick); // 需要实现这个方法
+            double backToMs = CalculateMsFromTick(calculatedTick);
             Debug.WriteLine($"[MidiPlayer] 逆运算验证: tick={calculatedTick} -> ms={backToMs:F2}");
 
             Debug.WriteLine($"[MidiPlayer] SetPosition({positionMs:F0}ms) 开始");
@@ -209,12 +215,12 @@ namespace NoteFluid.Core.Models
                 if (wasPaused)
                 {
                     _isPaused = true;
-                    _stopwatch.Reset();
+                    _stopwatch?.Reset();
                 }
                 else
                 {
                     _isPaused = false;
-                    _stopwatch.Restart();
+                    _stopwatch?.Restart();
                     StartTimer();
                 }
             }
@@ -222,10 +228,82 @@ namespace NoteFluid.Core.Models
             {
                 _isPlaying = false;
                 _isPaused = false;
-                _stopwatch.Reset();
+                _stopwatch?.Reset();
             }
 
             Debug.WriteLine($"[MidiPlayer] SetPosition完成, CurrentTimeMs={GetCurrentTimeMs():F0}");
+        }
+
+        /// <summary>
+        /// 播放指定音高的音符（不阻塞）
+        /// </summary>
+        /// <param name="midiNote">MIDI音符编号(21-108)，60=中央C</param>
+        /// <param name="velocity">力度(0-127)，默认100</param>
+        /// <param name="channel">MIDI通道(1-16)，默认1</param>
+        public void NoteOn(int midiNote, int velocity = 100, int channel = 1)
+        {
+            if (midiNote < 21 || midiNote > 108)
+                throw new ArgumentOutOfRangeException(nameof(midiNote),
+                    "MIDI音符必须在21-108范围内(钢琴范围)");
+
+            if (velocity < 0 || velocity > 127)
+                throw new ArgumentOutOfRangeException(nameof(velocity),
+                    "力度必须在0-127范围内");
+
+            if (channel < 1 || channel > 16)
+                throw new ArgumentOutOfRangeException(nameof(channel),
+                    "通道必须在1-16范围内");
+
+            try
+            {
+                // 发送 Note On 消息
+                var noteOnMessage = MidiMessage.StartNote(midiNote, velocity, channel).RawData;
+                _midiOut.Send(noteOnMessage);
+
+                Console.WriteLine($"[MidiPlayer] NoteOn: note={midiNote}, velocity={velocity}, channel={channel}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MidiPlayer] NoteOn错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 停止指定音高的音符
+        /// </summary>
+        /// <param name="midiNote">MIDI音符编号(21-108)</param>
+        /// <param name="channel">MIDI通道(1-16)，默认1</param>
+        public void NoteOff(int midiNote, int channel = 1)
+        {
+            if (midiNote < 21 || midiNote > 108)
+                throw new ArgumentOutOfRangeException(nameof(midiNote));
+
+            try
+            {
+                // 发送 Note Off 消息
+                var noteOffMessage = MidiMessage.StopNote(midiNote, 0, channel).RawData;
+                _midiOut.Send(noteOffMessage);
+
+                Console.WriteLine($"[MidiPlayer] NoteOff: note={midiNote}, channel={channel}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MidiPlayer] NoteOff错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 异步播放指定音高的音符
+        /// </summary>
+        /// <param name="midiNote">MIDI音符编号(21-108)</param>
+        /// <param name="durationMs">持续时间(毫秒)</param>
+        /// <param name="velocity">力度(0-127)，默认100</param>
+        /// <param name="channel">MIDI通道(1-16)，默认1</param>
+        public async Task PlayNoteAsync(int midiNote, int durationMs = 500, int velocity = 100, int channel = 1)
+        {
+            NoteOn(midiNote, velocity, channel);
+            await Task.Delay(durationMs);
+            NoteOff(midiNote, channel);
         }
 
         private double CalculateMsFromTick(int tick)

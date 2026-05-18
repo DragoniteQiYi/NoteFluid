@@ -8,9 +8,6 @@ namespace NoteFluid.Core.Services
 {
     public class MidiService
     {
-        private readonly FileService _fileService;
-        private readonly AudioService _audioService;
-
         public event Action<bool>? OnMidiFilePlaying;
         public event Action<bool>? OnMidiFileResume;
         public event Action<TimeSpan, TimeSpan>? OnProgressChanged;
@@ -20,12 +17,6 @@ namespace NoteFluid.Core.Services
         private MidiFile? _currentMidiFile;
         private MidiOut? _midiOut;
         private Timer? _progressTimer;
-
-        public MidiService(FileService fileService, AudioService audioService)
-        {
-            _fileService = fileService;
-            _audioService = audioService;
-        }
 
         public async Task PlayMidiFile(FileInfo midiFileInfo)
         {
@@ -96,10 +87,10 @@ namespace NoteFluid.Core.Services
             if (_midiPlayer != null)
             {
                 _midiPlayer.OnPlaybackCompleted -= HandlePlaybackCompleted;
+                _midiPlayer.Stop();
+                _midiPlayer.Dispose();
             }
-
-            _midiPlayer.Stop();
-            _midiPlayer.Dispose();
+            
             _midiOut?.Dispose();
             _midiOut = null;
             _midiPlayer = null;
@@ -129,6 +120,20 @@ namespace NoteFluid.Core.Services
                 var totalTime = TimeSpan.FromMilliseconds(_midiPlayer.TotalDurationMs);
                 OnProgressChanged?.Invoke(currentTime, totalTime);
             });
+        }
+
+        public async Task PlayNoteAsync(int midiNote)
+        {
+            if (_midiPlayer == null) return;
+
+            await _midiPlayer.PlayNoteAsync(midiNote);
+        }
+
+        public async Task PlayNoteAsync(MidiPlayer midiPlayer, int midiNote)
+        {
+            if (midiPlayer == null) return;
+
+            await midiPlayer.PlayNoteAsync(midiNote);
         }
 
         private void StartProgressTimer()

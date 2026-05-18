@@ -1,4 +1,5 @@
 ﻿using MaterialDesignThemes.Wpf;
+using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
 using NoteFluid.Core.ViewModels;
 using System.Diagnostics;
@@ -15,16 +16,13 @@ namespace NoteFluid.Core.Views
     /// </summary>
     public partial class Settings : Page
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly MainViewModel _mainViewModel;
         private readonly ThemeService _themeService;
 
-        public Settings(IServiceProvider serviceProvider, 
-            MainViewModel mainViewModel,
+        public Settings(MainViewModel mainViewModel,
             ThemeService themeService)
         {
             InitializeComponent();
-            _serviceProvider = serviceProvider;
             _mainViewModel = mainViewModel;
             _themeService = themeService;
 
@@ -55,22 +53,10 @@ namespace NoteFluid.Core.Views
 
         private void ColorListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ListBox listBox && listBox.SelectedItem is ListBoxItem selectedItem)
+            if (sender is ListBox listBox && listBox.SelectedItem is ColorItem selectedColor)
             {
-                // 获取选中项中的Rectangle来获取颜色
-                var stackPanel = selectedItem.Content as StackPanel;
-                var rectangle = stackPanel?.Children[0] as Rectangle;
-                if (rectangle != null)
-                {
-                    // 获取SolidColorBrush
-                    if (rectangle.Fill is SolidColorBrush brush)
-                    {
-                        // 提取Color
-                        Color selectedColor = brush.Color;
-                        // 处理选中的颜色
-                        _mainViewModel.ChangeColor(selectedColor);
-                    }
-                }
+                // 直接设置索引，触发ViewModel更新
+                _mainViewModel.SelectedColorIndex = listBox.SelectedIndex; 
             }
         }
 
@@ -141,5 +127,17 @@ namespace NoteFluid.Core.Views
                 Debug.WriteLine($"Navigation error: {ex.Message}");
             }
         }
+
+        private async void ColorPickerButton_Click(object sender, RoutedEventArgs e)
+        {
+            await DialogHost.Show(RootDialogHost.DialogContent);
+        }
+
+        private void ColorPickerHost_Cancel(object sender, RoutedEventArgs e)
+        {
+            DialogHost.Close("RootDialogHost");
+        }
+
+
     }
 }
