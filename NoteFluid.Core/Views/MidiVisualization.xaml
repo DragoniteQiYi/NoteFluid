@@ -25,7 +25,61 @@
                                          FalseBrush="Black"/>
     </Page.Resources>
 
-    <Grid Background="{DynamicResource MaterialDesignPaper}">
+    <materialDesign:DrawerHost x:Name="MainDrawerHost">
+        <materialDesign:DrawerHost.RightDrawerContent>
+            <StackPanel Width="280" Margin="24" Orientation="Vertical">
+                <!-- 标题 -->
+                <TextBlock Text="显示设置" 
+               FontSize="20" 
+               FontWeight="SemiBold"
+               Foreground="{DynamicResource MaterialDesignBody}"
+               Margin="0,0,0,24"/>
+
+                <!-- 第一行设置 -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="显示音名" 
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   FontSize="16" 
+                   VerticalAlignment="Center"
+                   Grid.Column="0"/>
+                    <ToggleButton x:Name="ShowPitchNameToggle"
+                                  Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                  Grid.Column="1"
+                                  Checked="ShowPitchNameToggle_Checked"
+                                  Unchecked="ShowPitchNameToggle_Unchecked"
+                                  IsChecked="{Binding ShowPitchName}"/>
+                </Grid>
+
+                <!-- 分割线（可选） -->
+                <Separator Margin="0,0,0,16" 
+               Style="{StaticResource MaterialDesignLightSeparator}"/>
+
+                <!-- 第二行设置 -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="显示八度" 
+                   Foreground="{DynamicResource MaterialDesignBody}"
+                   FontSize="16" 
+                   VerticalAlignment="Center"
+                   Grid.Column="0"/>
+                    <ToggleButton x:Name="ShowOctaveNameToggle"
+                                  Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                  Grid.Column="1"
+                                  Checked="ShowOctaveToggle_Checked"
+                                  Unchecked="ShowOctaveToggle_Unchecked"
+                                  IsChecked="{Binding ShowOctave}"/>
+                </Grid>
+            </StackPanel>
+        </materialDesign:DrawerHost.RightDrawerContent>
+
+        <Grid Background="{DynamicResource MaterialDesignPaper}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -60,12 +114,21 @@
                             Width="24" 
                             Height="24"/>
                     </Button>
+
+                     <Button Grid.Column="2" 
+                             Style="{StaticResource MaterialDesignIconForegroundButton}"
+                             ToolTip="菜单"
+                             Click="MenuButton_Click">
+                            <materialDesign:PackIcon Kind="Menu" 
+                                                     Width="24" 
+                                                     Height="24"/>
+                     </Button>
                 </Grid>
             </Border>
             <Border Grid.Row="1" Background="{DynamicResource MaterialDesignPaper}">
-                <ProgressBar x:Name="Progress" Minimum="0" Maximum="1"
-                             Height="20"
-                             VerticalAlignment="Center"/>
+                <ProgressBar x:Name="Progress" Minimum="0" Maximum="100" Height="20"
+                             VerticalAlignment="Center"
+                             Value="{Binding ProgressValue}"/>
             </Border>
         </Grid>
 
@@ -85,4 +148,5 @@
             </Viewbox>
         </Border>
     </Grid>
+        </materialDesign:DrawerHost>
 </Page>

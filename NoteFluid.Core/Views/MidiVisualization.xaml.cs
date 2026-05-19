@@ -26,9 +26,7 @@ namespace NoteFluid.Core.Views
 
         private void PianoKeyboard_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // 只重新生成数据，让XAML自动绑定
-            _viewModel.DrawPiano(PianoCanvas, ActualWidth);
-            _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+            ResetKeyboard();
         }
 
         private void BackToFileListButton_Click(object sender, RoutedEventArgs e)
@@ -39,9 +37,7 @@ namespace NoteFluid.Core.Views
         // 当页面加载完成时初始化钢琴键
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            // 初始生成数据
-            _viewModel.DrawPiano(PianoCanvas, ActualWidth);
-            _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+            ResetKeyboard();
             await _viewModel.PlayMidiFile();
         }
 
@@ -52,6 +48,42 @@ namespace NoteFluid.Core.Views
                 Debug.WriteLine($"钢琴键被点击 - MIDI音符: {midiNote}");
                 _viewModel.OnKeyClicked(midiNote);
             }
+        }
+
+        private void MenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainDrawerHost.IsRightDrawerOpen = !MainDrawerHost.IsRightDrawerOpen;
+        }
+
+        private void ShowPitchNameToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            _viewModel.ChangePitchNameDisplay(true);
+            ResetKeyboard();
+        }
+
+        private void ShowPitchNameToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _viewModel.ChangePitchNameDisplay(false);
+            ResetKeyboard();
+        }
+
+        private void ShowOctaveToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            _viewModel.ChangeOctaveDisplay(true);
+            ResetKeyboard();
+        }
+
+        private void ShowOctaveToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _viewModel.ChangeOctaveDisplay(false);
+            ResetKeyboard();
+        }
+
+        private void ResetKeyboard()
+        {
+            // 只重新生成数据，让XAML自动绑定
+            _viewModel.DrawPiano(PianoCanvas, ActualWidth);
+            _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
         }
     }
 }

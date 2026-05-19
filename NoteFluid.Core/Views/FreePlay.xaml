@@ -49,7 +49,8 @@
                           Style="{StaticResource MaterialDesignSwitchToggleButton}"
                           Grid.Column="1"
                           Checked="ShowPitchNameToggle_Checked"
-                          Unchecked="ShowPitchNameToggle_Unchecked"/>
+                          Unchecked="ShowPitchNameToggle_Unchecked"
+                                  IsChecked="{Binding ShowPitchName}"/>
                 </Grid>
 
                 <!-- 分割线（可选） -->
@@ -71,7 +72,8 @@
                           Style="{StaticResource MaterialDesignSwitchToggleButton}"
                           Grid.Column="1"
                           Checked="ShowOctaveToggle_Checked"
-                          Unchecked="ShowOctaveToggle_Unchecked"/>
+                          Unchecked="ShowOctaveToggle_Unchecked"
+                                  IsChecked="{Binding ShowOctave}"/>
                 </Grid>
             </StackPanel>
         </materialDesign:DrawerHost.RightDrawerContent>

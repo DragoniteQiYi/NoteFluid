@@ -137,42 +137,46 @@
             <!-- ==================== 第二行：搜索栏 ==================== -->
             <Border Grid.Row="1" 
                 Padding="10" 
-                Background="{DynamicResource MaterialDesignCardBackground}"
+                Background="{DynamicResource MaterialDesign.Brush.Primary.Light}"
                 BorderThickness="0,0,0,0.5">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <Border Background="{DynamicResource MaterialDesignCardBackground}"
+                        CornerRadius="6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <materialDesign:PackIcon Grid.Column="0" 
-                                         Kind="Magnify" 
-                                         Width="20" 
-                                         Height="20"
-                                         VerticalAlignment="Center"
-                                         Margin="8,0,10,0"
-                                         Foreground="{DynamicResource MaterialDesignBodyLight}"/>
-
-                    <TextBox Grid.Column="1" 
-                         x:Name="SearchTextBox"
+                        <materialDesign:PackIcon Grid.Column="0" 
+                         Kind="Magnify" 
+                         Width="20" 
+                         Height="20"
                          VerticalAlignment="Center"
-                         materialDesign:HintAssist.Hint="搜索文件..."
-                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                         Foreground="{DynamicResource MaterialDesignBody}"
-                         TextChanged="SearchTextBox_TextChanged">
-                    </TextBox>
+                         Margin="8,0,10,0"
+                         Foreground="{DynamicResource MaterialDesignBodyLight}"/>
 
-                    <materialDesign:PackIcon Grid.Column="2" 
-                                         Kind="CloseCircle" 
-                                         Width="20" 
-                                         Height="20"
-                                         VerticalAlignment="Center"
-                                         Margin="8,0,10,0"
-                                         Cursor="Hand"
-                                         Foreground="{DynamicResource MaterialDesignBody}"
-                                         ToolTip="清除搜索"/>
-                </Grid>
+                        <TextBox Grid.Column="1" 
+         x:Name="SearchTextBox"
+         VerticalAlignment="Center"
+         materialDesign:HintAssist.Hint="搜索文件..."
+         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+         Foreground="{DynamicResource MaterialDesignBody}"
+         TextChanged="SearchTextBox_TextChanged">
+                        </TextBox>
+
+                        <materialDesign:PackIcon Grid.Column="2" 
+                         Kind="CloseCircle" 
+                         Width="20" 
+                         Height="20"
+                         VerticalAlignment="Center"
+                         Margin="8,0,10,0"
+                         Cursor="Hand"
+                         Foreground="{DynamicResource MaterialDesignBody}"
+                         ToolTip="清除搜索"/>
+                    </Grid>
+                </Border>
+                
             </Border>
 
             <!-- ==================== 第三行：文件列表滚动视图 ==================== -->
@@ -235,8 +239,7 @@
             <!-- ==================== 第四行：文件计数状态栏 ==================== -->
             <Border Grid.Row="3" 
                 Padding="15,10" 
-                Background="{DynamicResource MaterialDesignCardBackground}"
-                BorderThickness="0,0.5,0,0">
+                Background="{DynamicResource MaterialDesignCardBackground}">
                 <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left">

@@ -36,8 +36,8 @@ namespace NoteFluid.Core.ViewModels
         public ObservableCollection<PianoKey> PianoKeys { get; private set; }
         public ObservableCollection<PianoKey> WhiteKeys { get; private set; }
         public ObservableCollection<PianoKey> BlackKeys { get; private set; }
-        public bool ShowPitchName { get; private set; }
-        public bool ShowOctave { get; private set; }
+        public bool ShowPitchName { get; set; }
+        public bool ShowOctave { get; set; }
 
         public FreePlayViewModel(NavigateService navigateService,
             ConfigService configService, MidiService midiService,

@@ -1,7 +1,6 @@
 ﻿<Window x:Class="NoteFluid.Core.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:NoteFluid.Core.Controls" 
         xmlns:local="clr-namespace:NoteFluid.Core"
         xmlns:views="clr-namespace:NoteFluid.Core.Views"
         xmlns:viewModels="clr-namespace:NoteFluid.Core.ViewModels"

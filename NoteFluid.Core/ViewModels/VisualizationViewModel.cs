@@ -4,6 +4,7 @@ using NoteFluid.Core.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,7 +12,7 @@ using System.Windows.Media;
 
 namespace NoteFluid.Core.ViewModels
 {
-    public class VisualizationViewModel : INotifyPropertyChanged
+    public class VisualizationViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly NavigateService _navigateService;
         private readonly ConfigService _configService;
@@ -29,10 +30,24 @@ namespace NoteFluid.Core.ViewModels
         private readonly string[] keyboardNoteSequence =
             { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
 
+        private double _progressValue;
+
         // 新增：钢琴键集合
         public ObservableCollection<PianoKey> PianoKeys { get; private set; }
         public ObservableCollection<PianoKey> WhiteKeys { get; private set; }
         public ObservableCollection<PianoKey> BlackKeys { get; private set; }
+        public bool ShowPitchName { get; set; }
+        public bool ShowOctave { get; set; }
+
+        public double ProgressValue
+        {
+            get => _progressValue;
+            set
+            {
+                _progressValue = value;
+                OnPropertyChanged();
+            }
+        }
 
         public VisualizationViewModel(NavigateService navigateService,
             ConfigService configService, MidiService midiService,
@@ -45,12 +60,16 @@ namespace NoteFluid.Core.ViewModels
 
             PianoKeys = [];
             WhiteKeys = [];
-            BlackKeys = [];        
+            BlackKeys = [];
+
+            _midiService.OnProgressChanged += HandleProgressValueChanged;
         }
 
         public void NavigateTo(string pageName)
         {
+            _midiService.StopMidiFile();
             _navigateService.Navigate(pageName);
+            Dispose();
         }
 
         // 生成所有钢琴键数据
@@ -65,12 +84,10 @@ namespace NoteFluid.Core.ViewModels
             double whiteKeyWidth = availableWidth / WHITE_KEY_COUNT;
             double blackKeyWidth = whiteKeyWidth * 0.6;
 
-            bool showPitchName = false;
-            bool showOctave = false;
             if (_configService?.ConfigData?.Visualization != null)
             {
-                showPitchName = _configService.ConfigData.Visualization.ShowPitchName;
-                showOctave = _configService.ConfigData.Visualization.ShowOctave;
+                ShowPitchName = _configService.ConfigData.Visualization.ShowPitchName;
+                ShowOctave = _configService.ConfigData.Visualization.ShowOctave;
             }
 
             int whiteKeyIndex = 0;
@@ -99,9 +116,9 @@ namespace NoteFluid.Core.ViewModels
                     key.X = whiteKeyIndex * whiteKeyWidth;
                     key.Y = 5;
 
-                    if (showPitchName)
+                    if (ShowPitchName)
                         key.DisplayText = $"{noteName}{octave}";
-                    else if (noteName == "C" && showOctave)
+                    else if (noteName == "C" && ShowOctave)
                         key.DisplayText = $"C{octave}";
 
                     WhiteKeys.Add(key);
@@ -115,7 +132,7 @@ namespace NoteFluid.Core.ViewModels
                     key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
                     key.Y = 5;
 
-                    if (showPitchName)
+                    if (ShowPitchName)
                         key.DisplayText = $"{noteName}{octave}";
 
                     BlackKeys.Add(key);
@@ -329,6 +346,12 @@ namespace NoteFluid.Core.ViewModels
             }
         }
 
+        private void HandleProgressValueChanged(TimeSpan currentTime, TimeSpan totalTime)
+        {
+            _progressValue = currentTime / totalTime * 100;
+            OnPropertyChanged(nameof(ProgressValue));
+        }
+
         private double CalculateBlackKeyPosition(int whiteKeyIndex, string noteName,
             double whiteKeyWidth, double blackKeyWidth)
         {
@@ -348,7 +371,7 @@ namespace NoteFluid.Core.ViewModels
             return (midiNote - 12) / 12;
         }
 
-        protected void OnPropertyChanged(string propertyName)
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -368,6 +391,33 @@ namespace NoteFluid.Core.ViewModels
             {
                 Debug.WriteLine($"错误：未找到 MIDI 音符 {midiNote} 对应的琴键");
             }
+        }
+
+        public void ChangePitchNameDisplay(bool state)
+        {
+            ShowPitchName = state;
+            if (_configService.ConfigData.Visualization != null)
+            {
+                _configService.ConfigData.Visualization.ShowPitchName = state;
+                _configService.Save();
+            }
+            OnPropertyChanged(nameof(ShowPitchName));
+        }
+
+        public void ChangeOctaveDisplay(bool state)
+        {
+            ShowOctave = state;
+            if (_configService.ConfigData.Visualization != null)
+            {
+                _configService.ConfigData.Visualization.ShowOctave = state;
+                _configService.Save();
+            }
+            OnPropertyChanged(nameof(ShowOctave));
+        }
+
+        public void Dispose()
+        {
+            _midiService.OnProgressChanged -= HandleProgressValueChanged;
         }
     }
 }

@@ -5,9 +5,9 @@ namespace NoteFluid.Core.Services
     public class FileService
     {
         private readonly string _midiFolderPath;
-        private FileInfo _selectedFile;
+        private FileInfo? _selectedFile;
 
-        public FileInfo SelectedFile
+        public FileInfo? SelectedFile
         {
             get => _selectedFile;
             set => _selectedFile = value;
@@ -80,9 +80,7 @@ namespace NoteFluid.Core.Services
                     return [];
                 }
 
-                return Directory.GetFiles(_midiFolderPath, "*.mid", SearchOption.TopDirectoryOnly)
-                                .Select(Path.GetFileName)
-                                .ToList();
+                return [.. Directory.GetFiles(_midiFolderPath, "*.mid", SearchOption.TopDirectoryOnly).Select(Path.GetFileName)];
             }
             catch (Exception ex)
             {

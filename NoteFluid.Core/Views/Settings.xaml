@@ -423,9 +423,9 @@ Width="500">
                 </Border>
                 <!-- 3. 版本信息区域 -->
                 <Border Grid.Row="2" 
-    Background="{DynamicResource MaterialDesignPaper}"
-    Padding="20,15" BorderThickness="0,1,0,0"
-    BorderBrush="{DynamicResource MaterialDesignPaper}">
+                        Background="{DynamicResource MaterialDesignPaper}"
+                        Padding="20,15" BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource MaterialDesignPaper}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -442,7 +442,7 @@ Width="500">
                          Foreground="{DynamicResource MaterialDesignBody}"
                          VerticalAlignment="Center"
                          Margin="0,0,8,0"/>
-                            <TextBlock Text="版本 1.0.0"
+                            <TextBlock Text="版本 v0.1.2-alpha"
            FontSize="14"
            Foreground="{DynamicResource MaterialDesignBody}"
            VerticalAlignment="Center"/>

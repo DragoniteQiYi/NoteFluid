@@ -150,6 +150,7 @@ namespace NoteFluid.Core.ViewModels
             OnPropertyChanged(nameof(CanPlay));
             OnPropertyChanged(nameof(ProgressValue));
             _navigateService.Navigate(pagePath);
+            Dispose();
         }
 
         private async Task PlayStopAsync()

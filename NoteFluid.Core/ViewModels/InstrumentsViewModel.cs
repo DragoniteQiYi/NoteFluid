@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NoteFluid.Core.Controls
+namespace NoteFluid.Core.ViewModels
 {
-    public class PianoRollController
+    public class InstrumentsViewModel
     {
 
     }
