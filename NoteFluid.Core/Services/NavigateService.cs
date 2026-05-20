@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NoteFluid.Core.Views;
 using System.Windows.Controls;
 
@@ -25,6 +25,7 @@ namespace NoteFluid.Core.Services
                 "FileList" => _serviceProvider.GetRequiredService<FileList>(),
                 "MidiVisualization" => _serviceProvider.GetRequiredService<MidiVisualization>(),
                 "FreePlay" => _serviceProvider.GetRequiredService<FreePlay>(),
+                "Instruments" => _serviceProvider.GetRequiredService<Instruments>(),
                 _ => throw new ArgumentException($"未知页面: {pageName}")
             };
 

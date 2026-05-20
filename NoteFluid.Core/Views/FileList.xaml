@@ -164,16 +164,16 @@
          Foreground="{DynamicResource MaterialDesignBody}"
          TextChanged="SearchTextBox_TextChanged">
                         </TextBox>
-
-                        <materialDesign:PackIcon Grid.Column="2" 
-                         Kind="CloseCircle" 
-                         Width="20" 
-                         Height="20"
-                         VerticalAlignment="Center"
-                         Margin="8,0,10,0"
-                         Cursor="Hand"
-                         Foreground="{DynamicResource MaterialDesignBody}"
-                         ToolTip="清除搜索"/>
+                        <materialDesign:PackIcon Grid.Column="2"
+                                    Kind="CloseCircle" 
+                                    Width="20" 
+                                    Height="20"
+                                    VerticalAlignment="Center"
+                                    Margin="0,8,8,8"
+                                    Cursor="Hand"
+                                    Foreground="{DynamicResource MaterialDesignBody}"
+                                    ToolTip="清除搜索"
+                                    MouseLeftButtonDown="ClearSearchTextBox"/>
                     </Grid>
                 </Border>
                 
@@ -181,7 +181,7 @@
 
             <!-- ==================== 第三行：文件列表滚动视图 ==================== -->
             <Border Grid.Row="2" 
-    Background="{DynamicResource MaterialDesignCardBackground}">
+                    Background="{DynamicResource MaterialDesignCardBackground}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                     HorizontalScrollBarVisibility="Disabled"
                     Padding="10"

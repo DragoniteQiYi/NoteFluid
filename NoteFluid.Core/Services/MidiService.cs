@@ -1,5 +1,5 @@
 ﻿using NAudio.Midi;
-using NoteFluid.Core.Models;
+using NoteFluid.Core.Utilities;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Media;

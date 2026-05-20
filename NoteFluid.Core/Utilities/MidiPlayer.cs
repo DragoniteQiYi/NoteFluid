@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Channels;
 
-namespace NoteFluid.Core.Models
+namespace NoteFluid.Core.Utilities
 {
     public class MidiPlayer : IDisposable
     {

@@ -2,6 +2,7 @@
 using NoteFluid.Core.Command;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
+using NoteFluid.Core.Utilities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -186,7 +187,7 @@ namespace NoteFluid.Core.ViewModels
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(0, 0, 3, 3),
                 Tag = key.MidiNote,
-                Cursor = Cursors.Hand  // 添加手型光标
+                Cursor = System.Windows.Input.Cursors.Hand  // 添加手型光标
             };
 
             // 添加鼠标事件处理
@@ -268,7 +269,7 @@ namespace NoteFluid.Core.ViewModels
             {
                 if (!key.IsPressed)
                 {
-                    border.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x40, 0x40));
+                    border.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x40, 0x40, 0x40));
                 }
             };
 

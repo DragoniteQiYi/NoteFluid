@@ -1,4 +1,4 @@
-﻿<Page x:Class="NoteFluid.Core.Views.MainMenu"
+<Page x:Class="NoteFluid.Core.Views.MainMenu"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -130,7 +130,7 @@
                         </Button.ContentTemplate>
                     </Button>
 
-                    <!-- 设置按钮 -->
+                    <!-- 自由演奏按钮 -->
                     <Button Content="自由演奏"
                             Style="{StaticResource MaterialDesignRaisedButton}"
                             Foreground="{DynamicResource MaterialDesignBody}"

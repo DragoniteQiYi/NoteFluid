@@ -1,18 +1,357 @@
-﻿<Page x:Class="NoteFluid.Core.Views.Instruments"
+<Page x:Class="NoteFluid.Core.Views.Instruments"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:NoteFluid.Core.Views"
-      xmlns:views="clr-namespace:NoteFluid.Core.Views"
       xmlns:vm="clr-namespace:NoteFluid.Core.ViewModels"
+      xmlns:converter="clr-namespace:NoteFluid.Core.Converters"
       xmlns:materialDesign="clr-namespace:MaterialDesignThemes.Wpf;assembly=MaterialDesignThemes.Wpf"
       mc:Ignorable="d" 
       d:DesignHeight="800" d:DesignWidth="1200"
       d:DataContext="{d:DesignInstance Type=vm:InstrumentsViewModel}"
-      Title="Instruments">
+      Title="乐器配置">
 
-    <Grid>
-        
+    <Page.Resources>
+        <!-- 颜色转换器 -->
+        <converter:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
+        <converter:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <!-- 乐器项模板 -->
+        <DataTemplate x:Key="InstrumentItemTemplate">
+            <Border Background="{DynamicResource MaterialDesignPaper}"
+                    BorderBrush="{DynamicResource MaterialDesignDivider}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,4"
+                    Padding="16,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 乐器图标 -->
+
+                        <materialDesign:PackIcon Kind="{Binding IconKind}"
+                                   FontSize="48"
+                                   Width="48"
+                                                 Height="48"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+
+
+                    <!-- 乐器信息 -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <TextBlock Text="{Binding DisplayName}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource MaterialDesignBody}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding NoteCount, StringFormat='音符: {0}'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                       Margin="0,0,12,0"/>
+                            <TextBlock Text="{Binding Channel, StringFormat='通道: {0}'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                       Margin="0,0,12,0"/>
+                            <TextBlock Text="{Binding PatchNumber, StringFormat='音色号: {0}'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        </StackPanel>
+                        <!-- 打击乐器标记 -->
+                        
+                        <TextBlock Text="🥁 打击乐器"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   Margin="0,2,0,0"
+                                   Visibility="{Binding IsPercussion, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+
+                    <!-- 颜色选择器 -->
+                    <Border Grid.Column="2"
+                            Width="36"
+                            Height="36"
+                            CornerRadius="18"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="2"
+                            Margin="12,0"
+                            Cursor="Hand"
+                            ToolTip="点击更改颜色">
+                        <Border.Background>
+                            <SolidColorBrush Color="{Binding Color}"/>
+                        </Border.Background>
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="红色" Click="ColorMenuItem_Click" Tag="#FFEF4444"/>
+                                <MenuItem Header="橙色" Click="ColorMenuItem_Click" Tag="#FFF98C35"/>
+                                <MenuItem Header="黄色" Click="ColorMenuItem_Click" Tag="#FFFACC48"/>
+                                <MenuItem Header="绿色" Click="ColorMenuItem_Click" Tag="#FF4AC878"/>
+                                <MenuItem Header="蓝色" Click="ColorMenuItem_Click" Tag="#FF4E84ED"/>
+                                <MenuItem Header="紫色" Click="ColorMenuItem_Click" Tag="#FF9358BA"/>
+                                <MenuItem Header="灰色" Click="ColorMenuItem_Click" Tag="#FFA5A5A5"/>
+                                <Separator/>
+                                <MenuItem Header="自定义..." Click="CustomColorMenuItem_Click"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                    </Border>
+
+                    <!-- 可见性按钮 -->
+                    <ToggleButton Grid.Column="3"
+                                  Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
+                                  ToolTip="显示/隐藏"
+                                  Margin="4,0"
+                                  IsChecked="{Binding IsVisible, Mode=OneWay}"
+                                  Click="VisibilityButton_Click">
+                        <Grid>
+                            <!-- 可见状态图标 -->
+                            <materialDesign:PackIcon Kind="Eye"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVisible}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                            <!-- 隐藏状态图标 -->
+                            <materialDesign:PackIcon Kind="EyeOff"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVisible}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </ToggleButton>
+
+                    <!-- 静音按钮 -->
+                    <ToggleButton Grid.Column="4"
+                                  Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
+                                  ToolTip="静音"
+                                  Margin="4,0"
+                                  IsChecked="{Binding IsMuted, Mode=OneWay}"
+                                  Click="MuteButton_Click">
+                        <Grid>
+                            <!-- 非静音状态图标 -->
+                            <materialDesign:PackIcon Kind="VolumeHigh"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMuted}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                            <!-- 静音状态图标 -->
+                            <materialDesign:PackIcon Kind="VolumeOff"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </ToggleButton>
+
+                    <!-- 独奏按钮 -->
+                    <ToggleButton Grid.Column="5"
+                                  Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
+                                  ToolTip="独奏"
+                                  Margin="4,0"
+                                  IsChecked="{Binding IsSolo, Mode=OneWay}"
+                                  Click="SoloButton_Click">
+                        <Grid>
+                            <!-- 非独奏状态图标 -->
+                            <materialDesign:PackIcon Kind="AlphaSCircleOutline"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSolo}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                            <!-- 独奏状态图标 -->
+                            <materialDesign:PackIcon Kind="AlphaSCircle"
+                                                     Width="20"
+                                                     Height="20">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSolo}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </ToggleButton>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Background="{DynamicResource MaterialDesignPaper}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部工具栏 -->
+        <Grid Grid.Row="0">
+            <Border Grid.Row="0" 
+                    Padding="15" 
+                    Margin="0,0,0,0"
+                    BorderThickness="0,0,0,0.5"
+                    Background="{DynamicResource MaterialDesign.Brush.Primary}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Click="BackButton_Click" ToolTip="返回文件列表" Grid.Column="0" HorizontalAlignment="Left"
+                            Style="{StaticResource MaterialDesignIconForegroundButton}">
+                        <materialDesign:PackIcon Kind="ArrowLeft" Width="24" Height="24"/>
+                    </Button>
+
+                    <TextBlock Grid.Column="1" Text="轨道和乐器" 
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               FontSize="32" Foreground="{DynamicResource MaterialDesignBody}"/>
+                    <Button Grid.Column="2" 
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            ToolTip="继续"
+                            HorizontalAlignment="Right"
+                            Click="ContinueButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="PlayCircleOutline" 
+                                 Width="20" 
+                                 Height="20"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,5,0"/>
+                            <TextBlock Text="继 续" 
+                                       VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+            
+        </Grid>
+
+        <!-- 文件信息栏 -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                CornerRadius="8"
+                Padding="16"
+                Visibility="{Binding IsFileLoaded, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding FileNameDisplay}" 
+                               FontSize="18" 
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource MaterialDesignBody}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock Text="{Binding TrackCount, StringFormat='轨道数: {0}'}" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   Margin="0,0,16,0"/>
+                        <TextBlock Text="{Binding MidiFileInfo.NoteCount, StringFormat='音符数: {0}'}" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   Margin="0,0,16,0"/>
+                        <TextBlock Text="{Binding MidiFileInfo.Duration, StringFormat='时长: {0:mm\\:ss}'}" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="1" 
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Click="ResetColorsButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Palette" Margin="0,0,8,0"/>
+                        <TextBlock Text="重置颜色"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- 乐器列表 -->
+        <ScrollViewer Grid.Row="2" 
+                      Margin="16,8"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsFileLoaded, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ItemsControl ItemsSource="{Binding InstrumentInfos}"
+                          ItemTemplate="{StaticResource InstrumentItemTemplate}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+
+
+        <!-- 底部说明 -->
+        <Border Grid.Row="3" 
+                Background="{DynamicResource MaterialDesignCardBackground}"
+                Margin="16,8"
+                CornerRadius="8"
+                Padding="16"
+                Visibility="{Binding IsFileLoaded}">
+            <TextBlock Text="提示：点击颜色圆圈可更改轨道颜色，使用眼睛图标控制可见性，使用音量图标控制静音，使用S图标控制独奏。"
+                       FontSize="12"
+                       Foreground="{DynamicResource MaterialDesignBodyLight}"
+                       TextWrapping="Wrap"/>
+        </Border>
     </Grid>
 </Page>

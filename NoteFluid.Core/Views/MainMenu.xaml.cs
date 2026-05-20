@@ -1,4 +1,4 @@
-﻿using NoteFluid.Core.ViewModels;
+using NoteFluid.Core.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -34,6 +34,11 @@ namespace NoteFluid.Core.Views
         private void FreePlayButton_Click(object sender, RoutedEventArgs e)
         {
             _mainViewModel.Navigate("FreePlay");
+        }
+
+        private void InstrumentsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _mainViewModel.Navigate("Instruments");
         }
 
         private void ExitButton_Click(object sender, EventArgs e)

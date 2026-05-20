@@ -7,7 +7,7 @@ namespace NoteFluid.Core.Models
     public class TrackInfo : INotifyPropertyChanged
     {
         public int TrackNumber { get; init; }
-        public string? TrackName { get; init; }
+        public string? TrackName { get; set; }
         public int NoteCount { get; init; }
 
         private Color _color = Colors.White;

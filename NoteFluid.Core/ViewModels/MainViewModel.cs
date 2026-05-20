@@ -163,7 +163,7 @@ namespace NoteFluid.Core.ViewModels
             [
                 new() { Name = "暖桃红", ColorHex = "#FF6B6B" },
                 new() { Name = "蜜橙", ColorHex = "#FFA94D" },
-                new() { Name = "薄荷绿", ColorHex = "#69DB7C" },
+                new() { Name = "翠绿", ColorHex = "#2F9E44" },
                 new() { Name = "天空蓝", ColorHex = "#4DABF7" },
                 new() { Name = "薰衣草紫", ColorHex = "#9775FA" }
             ];

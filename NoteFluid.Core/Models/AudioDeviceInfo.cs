@@ -5,9 +5,9 @@
     /// </summary>
     public class AudioDeviceInfo
     {
-        public string DeviceId { get; set; }
-        public string DeviceName { get; set; }
-        public string DeviceFriendlyName { get; set; }
+        public string? DeviceId { get; set; }
+        public string? DeviceName { get; set; }
+        public string? DeviceFriendlyName { get; set; }
         public int Channels { get; set; }
         public bool IsDefault { get; set; }
         public bool IsSelected { get; set; }

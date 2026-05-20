@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NoteFluid.Core.Services;
 using NoteFluid.Core.ViewModels;
 using NoteFluid.Core.Views;
@@ -47,12 +47,14 @@ namespace NoteFluid.Core
             services.AddSingleton<FileService>();
             services.AddSingleton<MidiService>();
             services.AddSingleton<ConfigService>();
+            services.AddSingleton<VisualizationService>();
 
             // 注册ViewModel
             services.AddSingleton<MainViewModel>();
             services.AddTransient<FileViewModel>();
             services.AddTransient<VisualizationViewModel>();
             services.AddTransient<FreePlayViewModel>();
+            services.AddTransient<InstrumentsViewModel>();
             
             // 注册窗口/页面
             services.AddTransient<MainWindow>();
@@ -61,6 +63,7 @@ namespace NoteFluid.Core
             services.AddTransient<FileList>();
             services.AddTransient<MidiVisualization>();
             services.AddTransient<FreePlay>();
+            services.AddTransient<Instruments>();
         }
 
         protected override void OnStartup(StartupEventArgs e)

@@ -10,6 +10,6 @@ namespace NoteFluid.Core.Models
         public int NoteCount { get; init; }
         public TimeSpan Duration { get; init; }
         public MidiFile? MidiData { get; init; }  // 内部持有，供播放使用
-        public List<TrackInfo>? Tracks { get; init; }
+        public List<InstrumentInfo>? Instruments { get; set; }
     }
 }

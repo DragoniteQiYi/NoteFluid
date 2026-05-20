@@ -41,7 +41,7 @@ namespace NoteFluid.Core.Views
 
         private void ContinueButton_Click(object sender, RoutedEventArgs e)
         {
-            _fileViewModel.NavigateTo("MidiVisualization");
+            _fileViewModel.NavigateTo("Instruments");
         }
 
         private void FileListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -67,6 +67,11 @@ namespace NoteFluid.Core.Views
         {
             await _fileViewModel.SetProgressValue(ProgressSlider.Value);
             _fileViewModel.IsSliderDragging = false;
+        }
+
+        private void ClearSearchTextBox(object sender, RoutedEventArgs e)
+        {
+            SearchTextBox.Text = string.Empty;
         }
     }
 }
