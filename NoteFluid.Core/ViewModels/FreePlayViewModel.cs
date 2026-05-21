@@ -173,7 +173,7 @@ namespace NoteFluid.Core.ViewModels
             }
         }
 
-        // 创建白键边框（添加点击事件）
+        // 创建白键边框（添加按下/释放事件）
         private Border CreateWhiteKeyBorder(PianoKey key)
         {
             var border = new Border
@@ -187,32 +187,71 @@ namespace NoteFluid.Core.ViewModels
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(0, 0, 3, 3),
                 Tag = key.MidiNote,
-                Cursor = System.Windows.Input.Cursors.Hand  // 添加手型光标
+                Cursor = System.Windows.Input.Cursors.Hand
             };
 
-            // 添加鼠标事件处理
             int capturedMidiNote = key.MidiNote;
+
+            // 鼠标按下时开始播放
             border.MouseLeftButtonDown += (s, e) =>
             {
-                Debug.WriteLine($"白键被点击 - MIDI音符: {capturedMidiNote}");
-                OnKeyClicked(capturedMidiNote);
+                Debug.WriteLine($"白键按下 - MIDI音符: {capturedMidiNote}");
+                border.Background = new SolidColorBrush(Colors.LightGray);
+                PressKey(capturedMidiNote);
+                border.CaptureMouse(); // 捕获鼠标以接收 MouseLeftButtonUp
+                e.Handled = true;
+            };
+
+            // 鼠标释放时停止播放
+            border.MouseLeftButtonUp += (s, e) =>
+            {
+                Debug.WriteLine($"白键释放 - MIDI音符: {capturedMidiNote}");
+                ReleaseKey(capturedMidiNote);
+                border.ReleaseMouseCapture();
+
+                // 检查鼠标是否仍在琴键上
+                Point mousePos = e.GetPosition(border);
+                if (mousePos.X >= 0 && mousePos.X <= border.ActualWidth &&
+                    mousePos.Y >= 0 && mousePos.Y <= border.ActualHeight)
+                {
+                    // 鼠标仍在琴键上，显示悬停高亮
+                    border.Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
+                }
+                else
+                {
+                    // 鼠标已移出，恢复默认颜色
+                    border.Background = new SolidColorBrush(Colors.White);
+                }
+
                 e.Handled = true;
             };
 
             // 鼠标进入时高亮
             border.MouseEnter += (s, e) =>
             {
-                if (!key.IsPressed)
+                // 如果被捕获说明正在按住此键，保持按下高亮
+                if (border.IsMouseCaptured)
                 {
+                    border.Background = new SolidColorBrush(Colors.LightGray);
+                }
+                else
+                {
+                    // 未捕获时显示悬停高亮
                     border.Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
                 }
             };
 
-            // 鼠标离开时恢复
+            // 鼠标离开时处理
             border.MouseLeave += (s, e) =>
             {
-                if (!key.IsPressed)
+                // 如果被捕获说明正在按住此键，保持按下高亮（不恢复）
+                if (border.IsMouseCaptured)
                 {
+                    border.Background = new SolidColorBrush(Colors.LightGray);
+                }
+                else
+                {
+                    // 未捕获时恢复白色
                     border.Background = new SolidColorBrush(Colors.White);
                 }
             };
@@ -227,7 +266,7 @@ namespace NoteFluid.Core.ViewModels
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     Margin = new Thickness(0, 0, 0, 8),
-                    IsHitTestVisible = false  // 让点击事件穿透到 Border
+                    IsHitTestVisible = false
                 };
 
                 var grid = new Grid();
@@ -238,7 +277,7 @@ namespace NoteFluid.Core.ViewModels
             return border;
         }
 
-        // 创建黑键边框（添加点击事件）
+        // 创建黑键边框（添加按下/释放事件）
         private Border CreateBlackKeyBorder(PianoKey key)
         {
             var border = new Border
@@ -252,32 +291,69 @@ namespace NoteFluid.Core.ViewModels
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(0, 0, 3, 3),
                 Tag = key.MidiNote,
-                Cursor = Cursors.Hand  // 添加手型光标
+                Cursor = Cursors.Hand
             };
 
-            // 添加鼠标事件处理
             int capturedMidiNote = key.MidiNote;
+
+            // 鼠标按下时开始播放
             border.MouseLeftButtonDown += (s, e) =>
             {
-                Debug.WriteLine($"黑键被点击 - MIDI音符: {capturedMidiNote}");
-                OnKeyClicked(capturedMidiNote);
+                Debug.WriteLine($"黑键按下 - MIDI音符: {capturedMidiNote}");
+                border.Background = new SolidColorBrush(Colors.DarkGray);
+                PressKey(capturedMidiNote);
+                border.CaptureMouse();
+                e.Handled = true;
+            };
+
+            // 鼠标释放时停止播放
+            border.MouseLeftButtonUp += (s, e) =>
+            {
+                Debug.WriteLine($"黑键释放 - MIDI音符: {capturedMidiNote}");
+                ReleaseKey(capturedMidiNote);
+                border.ReleaseMouseCapture();
+
+                // 检查鼠标是否仍在琴键上
+                Point mousePos = e.GetPosition(border);
+                if (mousePos.X >= 0 && mousePos.X <= border.ActualWidth &&
+                    mousePos.Y >= 0 && mousePos.Y <= border.ActualHeight)
+                {
+                    // 鼠标仍在琴键上，显示悬停高亮
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x40, 0x40));
+                }
+                else
+                {
+                    // 鼠标已移出，恢复默认颜色
+                    border.Background = new SolidColorBrush(Colors.Black);
+                }
+
                 e.Handled = true;
             };
 
             // 鼠标进入时高亮
             border.MouseEnter += (s, e) =>
             {
-                if (!key.IsPressed)
+                if (border.IsMouseCaptured)
                 {
-                    border.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x40, 0x40, 0x40));
+                    border.Background = new SolidColorBrush(Colors.DarkGray);
+                }
+                else
+                {
+                    border.Background = new SolidColorBrush(Color.FromRgb(0x40, 0x40, 0x40));
                 }
             };
 
-            // 鼠标离开时恢复
+            // 鼠标离开时处理
             border.MouseLeave += (s, e) =>
             {
-                if (!key.IsPressed)
+                // 如果被捕获说明正在按住此键，保持按下高亮（不恢复）
+                if (border.IsMouseCaptured)
                 {
+                    border.Background = new SolidColorBrush(Colors.DarkGray);
+                }
+                else
+                {
+                    // 未捕获时恢复黑色
                     border.Background = new SolidColorBrush(Colors.Black);
                 }
             };
@@ -292,7 +368,7 @@ namespace NoteFluid.Core.ViewModels
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
                     Margin = new Thickness(0, 0, 0, 5),
-                    IsHitTestVisible = false  // 让点击事件穿透到 Border
+                    IsHitTestVisible = false
                 };
 
                 var grid = new Grid();
@@ -303,7 +379,7 @@ namespace NoteFluid.Core.ViewModels
             return border;
         }
 
-        // 按键按下事件处理
+        // 按键按下事件处理 - 发送 NoteOn 播放音符
         public async void PressKey(int midiNote)
         {
             var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
@@ -311,15 +387,16 @@ namespace NoteFluid.Core.ViewModels
             {
                 key.IsPressed = true;
                 Debug.WriteLine($"按键按下: {key.NoteName}{key.Octave}");
-                // 手动绘制的 UI 需要通过重新绘制来更新
-                await Task.Run(async () =>
+
+                // 只发送 NoteOn，不自动停止
+                await Task.Run(() =>
                 {
-                    await _midiService.PlayNoteAsync(_midiPlayer, midiNote);
+                    _midiPlayer.NoteOn(midiNote);
                 });
             }
         }
 
-        // 按键释放事件处理
+        // 按键释放事件处理 - 发送 NoteOff 停止音符
         public void ReleaseKey(int midiNote)
         {
             var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
@@ -327,7 +404,9 @@ namespace NoteFluid.Core.ViewModels
             {
                 key.IsPressed = false;
                 Debug.WriteLine($"按键释放: {key.NoteName}{key.Octave}");
-                // 手动绘制的 UI 需要通过重新绘制来更新
+
+                // 发送 NoteOff 停止音符
+                _midiPlayer.NoteOff(midiNote);
             }
         }
 
