@@ -12,6 +12,9 @@ namespace NoteFluid.Core.Views
     {
         private FreePlayViewModel _viewModel;
 
+        // 存储当前活动的瀑布条
+        private readonly Dictionary<int, WaterfallBar> _activeWaterfalls = [];
+
         public FreePlay(FreePlayViewModel viewModel)
         {
             InitializeComponent();
@@ -21,6 +24,10 @@ namespace NoteFluid.Core.Views
             // 初始化时只生成数据，不手动绘制
             SizeChanged += PianoKeyboard_SizeChanged;
             Loaded += Page_Loaded;
+
+            // 订阅按键事件
+            _viewModel.KeyPressed += OnKeyPressed;
+            _viewModel.KeyReleased += OnKeyReleased;
         }
 
         private void PianoKeyboard_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -28,8 +35,81 @@ namespace NoteFluid.Core.Views
             ResetKeyboard();
         }
 
+        // 处理按键按下事件
+        private void OnKeyPressed(int midiNote)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var key = _viewModel.PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
+                if (key != null && WaterfallCanvas.ActualHeight > 0)
+                {
+                    // 如果该键已有瀑布条，先移除旧的
+                    if (_activeWaterfalls.ContainsKey(midiNote))
+                    {
+                        var oldBar = _activeWaterfalls[midiNote];
+                        oldBar.Release(); // 释放旧瀑布条，让它自然消失
+                        _activeWaterfalls.Remove(midiNote);
+                    }
+
+                    // 计算缩放比例
+                    double scaleX = WaterfallCanvas.ActualWidth / PianoCanvas.Width;
+
+                    // 转换坐标：从 PianoCanvas 坐标到 WaterfallCanvas 坐标
+                    double adjustedX = key.X * scaleX;
+                    double adjustedWidth = key.Width * scaleX;
+
+                    var waterfallBar = new WaterfallBar
+                    {
+                        Width = adjustedWidth,
+                        Height = WaterfallCanvas.ActualHeight
+                    };
+
+                    // 设置瀑布条位置
+                    Canvas.SetLeft(waterfallBar, adjustedX);
+                    Canvas.SetTop(waterfallBar, 0);
+
+                    WaterfallCanvas.Children.Add(waterfallBar);
+                    _activeWaterfalls[midiNote] = waterfallBar;
+
+                    // 启动增长动画
+                    waterfallBar.StartGrowing(WaterfallCanvas.ActualHeight);
+                }
+            });
+        }
+
+        // 处理按键释放事件
+        private void OnKeyReleased(int midiNote)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_activeWaterfalls.TryGetValue(midiNote, out var waterfallBar))
+                {
+                    waterfallBar.Release(); // 停止增长但继续向上移动
+                    _activeWaterfalls.Remove(midiNote);
+                }
+            });
+        }
+
+        // 清理所有瀑布条
+        private void CleanupWaterfalls()
+        {
+            foreach (var bar in _activeWaterfalls.Values)
+            {
+                bar.Release();
+            }
+            _activeWaterfalls.Clear();
+        }
+
+
         private void BackToMainMenuButton_Click(object sender, RoutedEventArgs e)
         {
+            // 清理所有瀑布条
+            foreach (var bar in _activeWaterfalls.Values)
+            {
+                
+            }
+            _activeWaterfalls.Clear();
+
             _viewModel.NavigateTo("MainMenu");
         }
 
@@ -38,7 +118,7 @@ namespace NoteFluid.Core.Views
         {
             // 初始生成数据
             _viewModel.DrawPiano(PianoCanvas, ActualWidth);
-            _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+            // _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
         }
 
         private void PianoKey_Click(object sender, RoutedEventArgs e)
@@ -85,6 +165,19 @@ namespace NoteFluid.Core.Views
             // 只重新生成数据，让XAML自动绑定
             _viewModel.DrawPiano(PianoCanvas, ActualWidth);
             _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+        }
+
+        // 页面卸载时清理资源
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            _viewModel.KeyPressed -= OnKeyPressed;
+            _viewModel.KeyReleased -= OnKeyReleased;
+
+            foreach (var bar in _activeWaterfalls.Values)
+            {
+                
+            }
+            _activeWaterfalls.Clear();
         }
     }
 }

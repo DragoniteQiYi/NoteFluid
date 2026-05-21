@@ -83,7 +83,7 @@ namespace NoteFluid.Core.Views
         {
             // 只重新生成数据，让XAML自动绑定
             _viewModel.DrawPiano(PianoCanvas, ActualWidth);
-            _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
+            // _viewModel.GeneratePianoKeys(PianoCanvas.ActualWidth > 0 ? PianoCanvas.ActualWidth : 1000);
         }
     }
 }

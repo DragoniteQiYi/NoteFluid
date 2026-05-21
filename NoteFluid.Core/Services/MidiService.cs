@@ -122,11 +122,18 @@ namespace NoteFluid.Core.Services
             });
         }
 
-        public async Task PlayNoteAsync(int midiNote)
+        public void NoteOn(int midiNote)
         {
             if (_midiPlayer == null) return;
 
-            await _midiPlayer.PlayNoteAsync(midiNote);
+            _midiPlayer.NoteOn(midiNote);
+        }
+
+        public void NoteOff(int midiNote)
+        {
+            if (_midiPlayer == null) return;
+
+            _midiPlayer.NoteOff(midiNote);
         }
 
         public async Task PlayNoteAsync(MidiPlayer midiPlayer, int midiNote)

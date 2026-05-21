@@ -17,12 +17,13 @@ namespace NoteFluid.Core.ViewModels
     {
         private readonly NavigateService _navigateService;
         private readonly ConfigService _configService;
-        private readonly MidiService _midiService;
 
         private readonly MidiPlayer _midiPlayer;
         private readonly MidiOut _midiOut;
 
         public event PropertyChangedEventHandler? PropertyChanged;
+        public event Action<int>? KeyPressed;
+        public event Action<int>? KeyReleased;
 
         private const int START_MIDI_NOTE = 21;
         private const int TOTAL_KEYS = 88;
@@ -41,12 +42,10 @@ namespace NoteFluid.Core.ViewModels
         public bool ShowOctave { get; set; }
 
         public FreePlayViewModel(NavigateService navigateService,
-            ConfigService configService, MidiService midiService,
-            FileService fileService)
+            ConfigService configService, FileService fileService)
         {
             _navigateService = navigateService;
             _configService = configService;
-            _midiService = midiService;
 
             PianoKeys = [];
             WhiteKeys = [];
@@ -72,8 +71,9 @@ namespace NoteFluid.Core.ViewModels
             WhiteKeys.Clear();
             BlackKeys.Clear();
 
-            double whiteKeyWidth = availableWidth / WHITE_KEY_COUNT;
-            double blackKeyWidth = whiteKeyWidth * 0.6;
+            double whiteKeySpacing = availableWidth / WHITE_KEY_COUNT;  // 白键间距
+            double whiteKeyWidth = whiteKeySpacing * 0.96;  // 白键实际宽度（留微小间隙）
+            double blackKeyWidth = whiteKeySpacing * 0.6;
 
             if (_configService?.ConfigData?.Visualization != null)
             {
@@ -102,9 +102,9 @@ namespace NoteFluid.Core.ViewModels
                 if (!isBlack)
                 {
                     // 白键
-                    key.Width = whiteKeyWidth;
+                    key.Width = whiteKeyWidth;  // 使用实际宽度
                     key.Height = BASE_WHITE_KEY_HEIGHT;
-                    key.X = whiteKeyIndex * whiteKeyWidth;
+                    key.X = whiteKeyIndex * whiteKeySpacing + (whiteKeySpacing - whiteKeyWidth) / 2;  // 在间距内居中
                     key.Y = 5;
 
                     if (ShowPitchName)
@@ -120,7 +120,7 @@ namespace NoteFluid.Core.ViewModels
                     // 黑键
                     key.Width = blackKeyWidth;
                     key.Height = BASE_BLACK_KEY_HEIGHT;
-                    key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
+                    key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeySpacing, blackKeyWidth);
                     key.Y = 5;
 
                     if (ShowPitchName)
@@ -187,7 +187,7 @@ namespace NoteFluid.Core.ViewModels
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(0, 0, 3, 3),
                 Tag = key.MidiNote,
-                Cursor = System.Windows.Input.Cursors.Hand
+                Cursor = Cursors.Hand
             };
 
             int capturedMidiNote = key.MidiNote;
@@ -379,7 +379,7 @@ namespace NoteFluid.Core.ViewModels
             return border;
         }
 
-        // 按键按下事件处理 - 发送 NoteOn 播放音符
+        // 修改 PressKey 方法
         public async void PressKey(int midiNote)
         {
             var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
@@ -387,6 +387,9 @@ namespace NoteFluid.Core.ViewModels
             {
                 key.IsPressed = true;
                 Debug.WriteLine($"按键按下: {key.NoteName}{key.Octave}");
+
+                // 触发按键按下事件
+                KeyPressed?.Invoke(midiNote);
 
                 // 只发送 NoteOn，不自动停止
                 await Task.Run(() =>
@@ -396,7 +399,7 @@ namespace NoteFluid.Core.ViewModels
             }
         }
 
-        // 按键释放事件处理 - 发送 NoteOff 停止音符
+        // 修改 ReleaseKey 方法
         public void ReleaseKey(int midiNote)
         {
             var key = PianoKeys.FirstOrDefault(k => k.MidiNote == midiNote);
@@ -405,22 +408,25 @@ namespace NoteFluid.Core.ViewModels
                 key.IsPressed = false;
                 Debug.WriteLine($"按键释放: {key.NoteName}{key.Octave}");
 
+                // 触发按键释放事件
+                KeyReleased?.Invoke(midiNote);
+
                 // 发送 NoteOff 停止音符
                 _midiPlayer.NoteOff(midiNote);
             }
         }
 
         private double CalculateBlackKeyPosition(int whiteKeyIndex, string noteName,
-            double whiteKeyWidth, double blackKeyWidth)
+            double whiteKeySpacing, double blackKeyWidth)
         {
             return noteName switch
             {
-                "C#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
-                "D#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
-                "F#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.5,
-                "G#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,
-                "A#" => whiteKeyIndex * whiteKeyWidth - blackKeyWidth * 0.55,
-                _ => whiteKeyIndex * whiteKeyWidth,
+                "C#" => whiteKeyIndex * whiteKeySpacing - blackKeyWidth * 0.5,
+                "D#" => whiteKeyIndex * whiteKeySpacing - blackKeyWidth * 0.5,
+                "F#" => whiteKeyIndex * whiteKeySpacing - blackKeyWidth * 0.5,
+                "G#" => whiteKeyIndex * whiteKeySpacing - blackKeyWidth * 0.55,
+                "A#" => whiteKeyIndex * whiteKeySpacing - blackKeyWidth * 0.55,
+                _ => whiteKeyIndex * whiteKeySpacing,
             };
         }
 

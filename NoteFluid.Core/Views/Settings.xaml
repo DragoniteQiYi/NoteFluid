@@ -434,27 +434,27 @@ Width="500">
 
                         <!-- 版本信息 -->
                         <StackPanel Grid.Column="0" 
-        Orientation="Horizontal" 
-        VerticalAlignment="Center">
+                                    Orientation="Horizontal" 
+                                    VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="InformationOutline" 
-                         Width="16" 
-                         Height="16" 
-                         Foreground="{DynamicResource MaterialDesignBody}"
-                         VerticalAlignment="Center"
-                         Margin="0,0,8,0"/>
-                            <TextBlock Text="版本 v0.1.2-alpha"
-           FontSize="14"
-           Foreground="{DynamicResource MaterialDesignBody}"
-           VerticalAlignment="Center"/>
+                                                     Width="16" 
+                                                     Height="16" 
+                                                     Foreground="{DynamicResource MaterialDesignBody}"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,0,8,0"/>
+                            <TextBlock Text="版本 v0.2.1-alpha"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource MaterialDesignBody}"
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
 
                         <!-- 版权信息 -->
                         <TextBlock Grid.Column="1" 
-       Text="© 2026 NoteFluid"
-       FontSize="12"
-       Foreground="{DynamicResource MaterialDesignBody}"
-       VerticalAlignment="Center"
-       Opacity="0.7"/>
+                                   Text="© 2026 NoteFluid"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource MaterialDesignBody}"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.7"/>
                     </Grid>
                 </Border>
 
