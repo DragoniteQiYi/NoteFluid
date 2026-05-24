@@ -13,7 +13,7 @@ namespace NoteFluid.Core.Services
 {
     public class WaterfallService : IDisposable
     {
-        private readonly VisualizationService _visualizationService;
+        private readonly InstrumentService _instrumentService;
         private readonly MidiService _midiService;
 
         private Canvas? _waterfallCanvas;
@@ -52,7 +52,7 @@ namespace NoteFluid.Core.Services
 
         private bool _isRunning;
 
-        private ObservableCollection<PianoKey> _pianoKeys;
+        private ObservableCollection<PianoKey>? _pianoKeys;
 
         // 缓存 MIDI 音符位置信息，避免重复计算
         private readonly Dictionary<int, (double X, double Width)> _noteLayoutCache = [];
@@ -67,10 +67,13 @@ namespace NoteFluid.Core.Services
 
         public event Action? OnAllBarsCompleted;
         public event Action? OnWaterfallInitialized;
+        public event Action<int, Color>? OnBarReached;
+        public event Action<int>? OnBarDeactived;
 
-        public WaterfallService(VisualizationService visualizationService, MidiService midiService)
+        public WaterfallService(InstrumentService instrumentService, MidiService midiService)
         {
-            _visualizationService = visualizationService ?? throw new ArgumentNullException(nameof(visualizationService));
+            _instrumentService = instrumentService ?? 
+                throw new ArgumentNullException(nameof(instrumentService));
             _midiService = midiService;
         }
 
@@ -106,7 +109,7 @@ namespace NoteFluid.Core.Services
 
             for (int midiNote = 21; midiNote <= 108; midiNote++)
             {
-                var pianoKey = _pianoKeys.FirstOrDefault(x => x.MidiNote == midiNote);
+                var pianoKey = _pianoKeys?.FirstOrDefault(x => x.MidiNote == midiNote);
                 if (pianoKey != null)
                 {
                     _notePianoKeyCache[midiNote] = pianoKey;
@@ -340,7 +343,7 @@ namespace NoteFluid.Core.Services
 
         private void AssignColors()
         {
-            var instrumentInfos = _visualizationService.InstrumentInfos;
+            var instrumentInfos = _instrumentService.InstrumentInfos;
 
             var colorMap = new Dictionary<(int Channel, int PatchNumber), (int InstrumentId, Color Color, bool IsVisible)>();
             foreach (var info in instrumentInfos)
@@ -373,7 +376,7 @@ namespace NoteFluid.Core.Services
         private void UpdateInstrumentVisibilityCache()
         {
             _instrumentVisibilityCache.Clear();
-            foreach (var info in _visualizationService.InstrumentInfos)
+            foreach (var info in _instrumentService.InstrumentInfos)
             {
                 _instrumentVisibilityCache[info.InstrumentId] = info.IsVisible;
             }
@@ -494,8 +497,9 @@ namespace NoteFluid.Core.Services
             double barHeight = durationSeconds * FallSpeed;
             double width = layout.Width * _scaleX;
             double left = layout.X * _scaleX;
+            int noteIndex = noteEvent.NoteNumber - 21;
 
-            bar.Initialize(width, barHeight, left, noteEvent.Color);
+            bar.Initialize(width, barHeight, left, noteEvent.Color, noteIndex);
 
             // 关键修改：底部应该在画布顶部
             double bottomPosition = 0; // 画布顶部（Y坐标0）
@@ -508,8 +512,10 @@ namespace NoteFluid.Core.Services
 
             bar.StartTimeMs = noteEvent.StartTimeMs;
             bar.EndTimeMs = noteEvent.EndTimeMs;
+            bar.OnBarReached += HandleBarReached;
+            bar.OnBarDeactive += HandleBarDeactived;
 
-            _waterfallCanvas.Children.Add(bar);
+            _waterfallCanvas?.Children.Add(bar);
 
             // 使用正确的ID作为键
             _activeBars[barId] = bar;
@@ -547,10 +553,17 @@ namespace NoteFluid.Core.Services
                     Canvas.SetTop(bar, topPosition);
                     bar.UpdatePosition(topPosition);
 
+                    if (topPosition + bar.Height >= _canvasHeight)
+                    {
+                        bar.ReachBottom();
+                    }
+
                     // 检查是否完全离开屏幕底部
                     if (topPosition > _canvasHeight)
                     {
                         bar.Deactivate();
+                        bar.OnBarReached -= HandleBarReached;
+                        bar.OnBarDeactive -= HandleBarDeactived;
                     }
                 }
             }
@@ -621,6 +634,8 @@ namespace NoteFluid.Core.Services
 
         private void OnCanvasSizeChanged(object sender, SizeChangedEventArgs e)
         {
+            if (_waterfallCanvas == null) return;
+
             _canvasHeight = _waterfallCanvas.ActualHeight;
             PrecomputeNoteLayouts();
         }
@@ -637,6 +652,17 @@ namespace NoteFluid.Core.Services
 
             _noteLayoutCache.Clear();
             _instrumentVisibilityCache.Clear();
+        }
+
+
+        private void HandleBarReached(int noteIndex, Color color)
+        {
+            OnBarReached?.Invoke(noteIndex, color);
+        }
+
+        private void HandleBarDeactived(int noteIndex)
+        {
+            OnBarDeactived?.Invoke(noteIndex);
         }
     }
 }

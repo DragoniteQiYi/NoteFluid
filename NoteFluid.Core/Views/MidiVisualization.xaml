@@ -115,7 +115,11 @@
                             Height="24"/>
                     </Button>
 
-                     <Button Grid.Column="2" 
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center"
+                                   Text="{Binding CurrentFileName}" Foreground="{DynamicResource MaterialDesignBody}"
+                                   FontSize="32"/>
+
+                        <Button Grid.Column="2" 
                              Style="{StaticResource MaterialDesignIconForegroundButton}"
                              ToolTip="菜单"
                              Click="MenuButton_Click">

@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
-using NoteFluid.Core.Utilities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -19,6 +18,7 @@ namespace NoteFluid.Core.ViewModels
         private readonly ConfigService _configService;
         private readonly MidiService _midiService;
         private readonly WaterfallService _waterfallService;
+        private readonly FileService _fileService;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -30,6 +30,7 @@ namespace NoteFluid.Core.ViewModels
 
         private readonly string[] keyboardNoteSequence =
             { "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#" };
+        private Dictionary<int, Border> _keyBorders = [];
 
         private double _progressValue;
 
@@ -39,6 +40,7 @@ namespace NoteFluid.Core.ViewModels
         public ObservableCollection<PianoKey> BlackKeys { get; private set; }
         public bool ShowPitchName { get; set; }
         public bool ShowOctave { get; set; }
+        public string CurrentFileName => _fileService.SelectedFile.Name;
 
         public double ProgressValue
         {
@@ -52,18 +54,21 @@ namespace NoteFluid.Core.ViewModels
 
         public VisualizationViewModel(NavigateService navigateService,
             ConfigService configService, MidiService midiService,
-            WaterfallService waterfallService)
+            WaterfallService waterfallService, FileService fileService)
         {
             _navigateService = navigateService;
             _configService = configService;
             _midiService = midiService;
             _waterfallService = waterfallService;
+            _fileService = fileService;
 
             PianoKeys = [];
             WhiteKeys = [];
             BlackKeys = [];
 
             _midiService.OnProgressChanged += HandleProgressValueChanged;
+            _waterfallService.OnBarReached += SetKeyColor;
+            _waterfallService.OnBarDeactived += ResetKeyColor;
         }
 
         public void NavigateTo(string pageName)
@@ -202,6 +207,8 @@ namespace NoteFluid.Core.ViewModels
                 Cursor = Cursors.Hand
             };
 
+            // 缓存 Border 引用
+            _keyBorders[key.MidiNote] = border;
             int capturedMidiNote = key.MidiNote;
 
             // 鼠标按下时开始播放
@@ -306,6 +313,8 @@ namespace NoteFluid.Core.ViewModels
                 Cursor = Cursors.Hand
             };
 
+            // 缓存 Border 引用
+            _keyBorders[key.MidiNote] = border;
             int capturedMidiNote = key.MidiNote;
 
             // 鼠标按下时开始播放
@@ -509,6 +518,40 @@ namespace NoteFluid.Core.ViewModels
             _midiService.OnProgressChanged -= HandleProgressValueChanged;
 
             _waterfallService.Clear();
+        }
+
+        public void SetKeyColor(int keyIndex, Color color)
+        {
+            if (keyIndex >= 0 && keyIndex < PianoKeys.Count)
+            {
+                var key = PianoKeys[keyIndex];
+
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    if (_keyBorders.TryGetValue(key.MidiNote, out var border))
+                    {
+                        var brush = new SolidColorBrush(color);
+                        border.Background = brush;
+                    }
+                });
+            }
+        }
+
+        public void ResetKeyColor(int keyIndex)
+        {
+            if (keyIndex >= 0 && keyIndex < PianoKeys.Count)
+            {
+                var key = PianoKeys[keyIndex];
+
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    if (_keyBorders.TryGetValue(key.MidiNote, out var border))
+                    {
+                        border.Background = new SolidColorBrush(
+                            key.IsBlackKey ? Colors.Black : Colors.White);
+                    }
+                });
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ namespace NoteFluid.Core
             services.AddSingleton<FileService>();
             services.AddSingleton<MidiService>();
             services.AddSingleton<ConfigService>();
-            services.AddSingleton<VisualizationService>();
+            services.AddSingleton<InstrumentService>();
             services.AddSingleton<WaterfallService>();
 
             // 注册ViewModel

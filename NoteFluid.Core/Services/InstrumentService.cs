@@ -11,7 +11,7 @@ namespace NoteFluid.Core.Services
     /// <summary>
     /// 可视化服务，管理MIDI乐器信息和颜色配置
     /// </summary>
-    public class VisualizationService
+    public class InstrumentService
     {
         private readonly ConfigService _configService;
 
@@ -149,7 +149,7 @@ namespace NoteFluid.Core.Services
             "电话铃声", "直升机", "掌声", "枪声"
         ];
 
-        public VisualizationService(ConfigService configService)
+        public InstrumentService(ConfigService configService)
         {
             _configService = configService;
         }

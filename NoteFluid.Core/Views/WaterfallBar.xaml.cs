@@ -15,6 +15,10 @@ namespace NoteFluid.Core.Views
 
         public bool IsActive { get; set; }
 
+        public bool ReachedBottom { get; set; }
+
+        public Color Color { get; set; }
+
         public int NoteIndex { get; set; }
 
         // ======== Free Play ========
@@ -30,6 +34,9 @@ namespace NoteFluid.Core.Views
         private readonly LinearGradientBrush _gradientBrush;
 
         private readonly DropShadowEffect _shadowEffect;
+
+        public event Action<int, Color>? OnBarReached;
+        public event Action<int>? OnBarDeactive;
 
         public WaterfallBar()
         {
@@ -64,10 +71,12 @@ namespace NoteFluid.Core.Views
             double width,
             double height,
             double left,
-            Color color)
+            Color color,
+            int noteIndex)
         {
             Width = width;
             Height = height;
+            NoteIndex = noteIndex;
 
             BarBorder.Width = width;
             BarBorder.Height = height;
@@ -89,7 +98,18 @@ namespace NoteFluid.Core.Views
         public void Deactivate()
         {
             IsActive = false;
+            ReachedBottom = false;
             Visibility = Visibility.Collapsed;
+            OnBarDeactive?.Invoke(NoteIndex);
+        }
+
+        public void ReachBottom()
+        {
+            if (!ReachedBottom)
+            {
+                OnBarReached?.Invoke(NoteIndex, Color);
+            }
+            ReachedBottom = true;
         }
 
         // ============================================
@@ -189,6 +209,8 @@ namespace NoteFluid.Core.Views
                     Color.FromArgb(0, r, g, b), 1));
 
             _shadowEffect.Color = color;
+
+            Color = color;
         }
     }
 }

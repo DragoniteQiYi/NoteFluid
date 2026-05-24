@@ -19,7 +19,7 @@ namespace NoteFluid.Core.ViewModels
     {
         private readonly NavigateService _navigateService;
         private readonly FileService _fileService;
-        private readonly VisualizationService _visualizationService;
+        private readonly InstrumentService _visualizationService;
         private readonly MidiService _midiService;
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace NoteFluid.Core.ViewModels
         public InstrumentsViewModel(
             NavigateService navigateService,
             FileService fileService,
-            VisualizationService visualizationService,
+            InstrumentService visualizationService,
             MidiService midiService)
         {
             _navigateService = navigateService;
@@ -177,7 +177,7 @@ namespace NoteFluid.Core.ViewModels
         /// </summary>
         public void ResetColorsToDefault()
         {
-            var rainbowColors = VisualizationService.RainbowColors;
+            var rainbowColors = InstrumentService.RainbowColors;
             for (int i = 0; i < InstrumentInfos.Count; i++)
             {
                 if (InstrumentInfos[i].IsPercussion)

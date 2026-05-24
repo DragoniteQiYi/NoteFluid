@@ -1,5 +1,5 @@
-﻿using NAudio.Midi;
-using NoteFluid.Core.Command;
+﻿using CommunityToolkit.Mvvm.Input;
+using NAudio.Midi;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
 using NoteFluid.Core.Utilities;

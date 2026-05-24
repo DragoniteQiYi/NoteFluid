@@ -21,11 +21,5 @@ namespace NoteFluid.Core.Models
         public ICommand? KeyClickCommand { get; set; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-
-        // 添加这个构造函数用于调试
-        public void ExecuteClick()
-        {
-            KeyClickCommand?.Execute(MidiNote);
-        }
     }
 }
