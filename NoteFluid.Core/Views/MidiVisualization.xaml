@@ -115,10 +115,23 @@
                             Height="24"/>
                     </Button>
 
-                        <TextBlock Grid.Column="1" HorizontalAlignment="Center"
-                                   Text="{Binding CurrentFileName}" Foreground="{DynamicResource MaterialDesignBody}"
-                                   FontSize="32"/>
-
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+                            <!-- 播放按钮 -->
+                            <Button Style="{StaticResource MaterialDesignFloatingActionButton}"
+                                    Background="{DynamicResource MaterialDesign.Brush.Primary}"
+                                    ToolTip="播放"
+                                    Width="32" 
+                                    Height="32"
+                                    Margin="0,0,16,8"
+                                    Command="{Binding PlayStopCommand}"
+                                    IsEnabled="{Binding IsLoaded}">
+                                <materialDesign:PackIcon Kind="{Binding PlayIconKind}" 
+                                                         Width="24" 
+                                                         Height="24"/>
+                            </Button>
+                            <TextBlock Text="{Binding CurrentFileName}" Foreground="{DynamicResource MaterialDesignBody}" FontSize="32"/>
+                        </StackPanel>
+                        
                         <Button Grid.Column="2" 
                              Style="{StaticResource MaterialDesignIconForegroundButton}"
                              ToolTip="菜单"

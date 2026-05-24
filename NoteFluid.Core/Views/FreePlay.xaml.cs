@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace NoteFluid.Core.Views
 {
@@ -63,17 +64,18 @@ namespace NoteFluid.Core.Views
                         Width = adjustedWidth,
                         Height = WaterfallCanvas.ActualHeight
                     };
+                    waterfallBar.SetColor(Colors.CornflowerBlue);
 
                     // 设置瀑布条位置
                     Canvas.SetLeft(waterfallBar, adjustedX);
                     Canvas.SetTop(waterfallBar, 0);
+                    Panel.SetZIndex(waterfallBar, 100);
 
                     WaterfallCanvas.Children.Add(waterfallBar);
                     _activeWaterfalls[midiNote] = waterfallBar;
 
                     // 启动增长动画
                     waterfallBar.StartGrowing(WaterfallCanvas.ActualHeight);
-                    // waterfallBar.StartFalling(WaterfallCanvas.ActualHeight, 100);
                 }
             });
         }

@@ -39,7 +39,7 @@ namespace NoteFluid.Core.Services
         private int _nextEventIndex;
 
         // 瀑布条下落速度（像素/秒）
-        public double FallSpeed { get; set; } = 300.0;
+        public double FallSpeed { get; set; } = 200.0;
 
         // 画布高度缓存
         private double _canvasHeight;

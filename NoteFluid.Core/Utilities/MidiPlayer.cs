@@ -519,7 +519,7 @@ namespace NoteFluid.Core.Utilities
 
             try
             {
-                // ✅ 对NoteEvent进行静音检查
+                // 对NoteEvent进行静音检查
                 if (midiEvent is NoteEvent noteEvent)
                 {
                     // 获取该音符所属的乐器Patch

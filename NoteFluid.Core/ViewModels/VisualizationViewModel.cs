@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using MaterialDesignThemes.Wpf;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Services;
 using System.Collections.ObjectModel;
@@ -9,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using static System.Windows.Forms.AxHost;
 
 namespace NoteFluid.Core.ViewModels
 {
@@ -33,6 +35,7 @@ namespace NoteFluid.Core.ViewModels
         private Dictionary<int, Border> _keyBorders = [];
 
         private double _progressValue;
+        private PackIconKind _playIconKind = PackIconKind.Pause;
 
         // 新增：钢琴键集合
         public ObservableCollection<PianoKey> PianoKeys { get; private set; }
@@ -40,6 +43,17 @@ namespace NoteFluid.Core.ViewModels
         public ObservableCollection<PianoKey> BlackKeys { get; private set; }
         public bool ShowPitchName { get; set; }
         public bool ShowOctave { get; set; }
+        public double FallingSpeed { get; set; } = 200;
+
+        // 播放状态
+        public bool IsLoaded { get; set; } = false;
+        public bool IsPaused { get; set; }
+        public PackIconKind PlayIconKind
+        {
+            get => _playIconKind;
+        }
+        public ICommand PlayStopCommand { get; }
+
         public string CurrentFileName => _fileService.SelectedFile.Name;
 
         public double ProgressValue
@@ -69,6 +83,8 @@ namespace NoteFluid.Core.ViewModels
             _midiService.OnProgressChanged += HandleProgressValueChanged;
             _waterfallService.OnBarReached += SetKeyColor;
             _waterfallService.OnBarDeactived += ResetKeyColor;
+
+            PlayStopCommand = new RelayCommand(PlayStopAsync);
         }
 
         public void NavigateTo(string pageName)
@@ -96,6 +112,7 @@ namespace NoteFluid.Core.ViewModels
             {
                 ShowPitchName = _configService.ConfigData.Visualization.ShowPitchName;
                 ShowOctave = _configService.ConfigData.Visualization.ShowOctave;
+                FallingSpeed = _configService.ConfigData.Visualization.FallingSpeed;
             }
 
             int whiteKeyIndex = 0;
@@ -409,7 +426,43 @@ namespace NoteFluid.Core.ViewModels
             // 2. 启动瀑布流
             _waterfallService.Start(delayMs);
 
+            IsLoaded = true;
+            OnPropertyChanged(nameof(IsLoaded));
             //await _midiService.PlayMidiFile(delayMs);
+        }
+
+        public void PauseMidiFile()
+        {
+            _waterfallService.Pause();
+            _midiService.PauseMidiFile();
+            _playIconKind = PackIconKind.Play;
+            IsPaused = true;
+            OnPropertyChanged(nameof(IsPaused));
+            OnPropertyChanged(nameof(PlayIconKind));
+        }
+
+        public void ResumeMidiFile()
+        {
+            _waterfallService.Resume();
+            _midiService.ResumeMidiFile();
+            _playIconKind = PackIconKind.Pause;
+            IsPaused = false;
+            OnPropertyChanged(nameof(IsPaused));
+            OnPropertyChanged(nameof(PlayIconKind));
+        }
+
+        private void PlayStopAsync()
+        {
+            if (!IsLoaded) return;
+
+            if (!IsPaused)
+            {
+                PauseMidiFile();
+            }
+            else
+            {
+                ResumeMidiFile();
+            }
         }
 
         // 按键按下事件处理 - 发送 NoteOn 播放音符
@@ -511,6 +564,17 @@ namespace NoteFluid.Core.ViewModels
                 _configService.Save();
             }
             OnPropertyChanged(nameof(ShowOctave));
+        }
+
+        public void ChangeFallingSpeed(double fallingSpeed)
+        {
+            FallingSpeed = fallingSpeed;
+            if (_configService.ConfigData.Visualization != null)
+            {
+                _configService.ConfigData.Visualization.FallingSpeed = fallingSpeed;
+                _configService.Save();
+            }
+            OnPropertyChanged(nameof(FallingSpeed));
         }
 
         public void Dispose()

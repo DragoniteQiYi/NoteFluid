@@ -226,7 +226,7 @@
                                          Foreground="{DynamicResource MaterialDesignBody}"
                                          VerticalAlignment="Center"
                                          Margin="0,0,8,0"/>
-                        <TextBlock Text="版本 v0.2.1-alpha"
+                        <TextBlock Text="v1.0.1-Release"
                            FontSize="14"
                            Foreground="{DynamicResource MaterialDesignBody}"
                            VerticalAlignment="Center"/>
