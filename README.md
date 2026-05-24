@@ -16,9 +16,9 @@
    
    Play MIDI files ✅
 
-3. 根据音符实时生成可视化的钢琴卷帘瀑布流动画 (正在开发中)
+3. 根据音符实时生成可视化的钢琴卷帘瀑布流动画
    
-   Generate real-time piano roll waterfall animation based on notes (Under Development)
+   Generate real-time piano roll waterfall animation based on notes ✅
 
 4. 多语言本地化支持 (正在开发中)
    
@@ -40,9 +40,9 @@
 
    Open the "Play Music" page from the main menu to discover all the MIDI files that have been loaded (if you add files while the application is running, you need to restart the application).
 
-4. 选中文件，点击继续按钮即可播放
+4. 选中文件，点击继续按钮即可查看所有乐器。你可以选择静音、隐藏任意乐器，也可以更改其颜色。更改的配置将会保存至当前目录。
 
-   Select a file and click the "Continue" button to start playback.
+   Select a file and click the "Continue" button to start playback. You can mute, hide any instruments or change its waterfall bar color. Configs modified will be saved to current directory.
 
 ---
 
