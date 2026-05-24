@@ -132,7 +132,15 @@
             </Border>
         </Grid>
 
-        <!-- 钢琴键盘 - 底部区域（纯 Canvas，不使用 ItemsControl）-->
+        <!-- 瀑布条显示区域 -->
+        <Canvas x:Name="WaterfallCanvas" 
+                Grid.Row="1"
+                Background="#FF1A1A2E"
+                ClipToBounds="True">
+                <!-- 瀑布条将动态添加到这里 -->
+        </Canvas>
+
+            <!-- 钢琴键盘 - 底部区域（纯 Canvas，不使用 ItemsControl）-->
         <Border Grid.Row="2" 
                 Background="#FF2D2D2D"
                 BorderBrush="Black"

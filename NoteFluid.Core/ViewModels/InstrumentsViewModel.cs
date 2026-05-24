@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace NoteFluid.Core.ViewModels
@@ -19,6 +20,8 @@ namespace NoteFluid.Core.ViewModels
         private readonly NavigateService _navigateService;
         private readonly FileService _fileService;
         private readonly VisualizationService _visualizationService;
+        private readonly MidiService _midiService;
+        private readonly WaterfallService _waterfallService;
 
         /// <summary>
         /// 当前选中的MIDI文件
@@ -55,20 +58,21 @@ namespace NoteFluid.Core.ViewModels
         public InstrumentsViewModel(
             NavigateService navigateService,
             FileService fileService,
-            VisualizationService visualizationService)
+            VisualizationService visualizationService,
+            MidiService midiService,
+            WaterfallService waterfallService)
         {
             _navigateService = navigateService;
             _fileService = fileService;
             _visualizationService = visualizationService;
-
-            // 加载选中的MIDI文件
-            LoadSelectedMidiFile();
+            _midiService = midiService;
+            _waterfallService = waterfallService;
         }
 
         /// <summary>
         /// 加载选中的MIDI文件
         /// </summary>
-        public void LoadSelectedMidiFile()
+        public async Task LoadSelectedMidiFile()
         {
             var file = _fileService.SelectedFile;
             if (file == null)
@@ -82,10 +86,13 @@ namespace NoteFluid.Core.ViewModels
                 Debug.WriteLine($"[InstrumentsViewModel] 加载文件: {file.FullName}");
 
                 // 使用NAudio读取MIDI文件信息
-                var midiFile = new MidiFile(file.FullName, false);
-
-                // 读取乐器信息
-                var instrumentList = MidiInstrumentReader.GetTrackInstruments(file.FullName);
+                var midiFile = await _midiService.LoadMidiFile(file);
+                //var midiFile = new MidiFile(file.FullName, false);
+                if (midiFile == null)
+                {
+                    Debug.WriteLine("加载MIDI文件失败");
+                    return;
+                }
 
                 // 创建MidiFileInfo
                 MidiFileInfo = new MidiFileInfo
@@ -96,11 +103,13 @@ namespace NoteFluid.Core.ViewModels
                     NoteCount = CountAllNotes(midiFile),
                     Duration = CalculateDuration(midiFile),
                     MidiData = midiFile,
-                    Instruments = instrumentList
                 };
 
                 // 委托VisualizationService加载和处理所有数据
-                _visualizationService.LoadMidiFile(MidiFileInfo);
+                _visualizationService.LoadMidiFile(MidiFileInfo, midiFile);
+                // 委托WaterfallService加载所有音符事件
+
+                MidiFileInfo = _visualizationService.CurrentMidiFileInfo;
 
                 OnPropertyChanged(nameof(MidiFileInfo));
                 OnPropertyChanged(nameof(IsFileLoaded));

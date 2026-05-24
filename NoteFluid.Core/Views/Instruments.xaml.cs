@@ -160,9 +160,14 @@ namespace NoteFluid.Core.Views
             _viewModel.ResetColorsToDefault();
         }
 
-        private void ContinueButton_Click(Object sender, RoutedEventArgs e)
+        private void ContinueButton_Click(object sender, RoutedEventArgs e)
         {
             _viewModel.NavigateTo("MidiVisualization");
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            _viewModel.LoadSelectedMidiFile();
         }
     }
 

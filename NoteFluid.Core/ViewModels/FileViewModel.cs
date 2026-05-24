@@ -161,8 +161,8 @@ namespace NoteFluid.Core.ViewModels
             {
                 IsLoading = true;
                 CanPlayOrStop = false;
-               
-                await _midiService.PlayMidiFile(_selectedFile);
+                await _midiService.LoadMidiFile(_selectedFile);
+                await _midiService.PlayMidiFile();
 
                 IsLoading = false;
                 CanPlayOrStop = true;

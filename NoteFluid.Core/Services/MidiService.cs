@@ -1,8 +1,8 @@
 ﻿using NAudio.Midi;
+using NoteFluid.Core.Models;
 using NoteFluid.Core.Utilities;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Media;
 
 namespace NoteFluid.Core.Services
 {
@@ -12,49 +12,88 @@ namespace NoteFluid.Core.Services
         public event Action<bool>? OnMidiFileResume;
         public event Action<TimeSpan, TimeSpan>? OnProgressChanged;
         public event Action? OnMidiFileCompleted;
+        public event Action<MidiFile>? OnMidiFileLoaded;
+        public event Action<double>? OnMidiPlaybackStarted;
 
         private MidiPlayer? _midiPlayer;
         private MidiFile? _currentMidiFile;
+        private FileInfo? _currentMidiFileInfo;
         private MidiOut? _midiOut;
         private Timer? _progressTimer;
+        private bool _isLoaded;
 
-        public async Task PlayMidiFile(FileInfo midiFileInfo)
+        public double CurrentTimeMs => _midiPlayer?.CurrentTimeMs ?? 0;
+        public bool IsPlaying => _midiPlayer?.IsPlaying ?? false;
+        public MidiFile? CurrentMidiFile => _currentMidiFile;
+
+        public async Task<MidiFile?> LoadMidiFile(FileInfo midiFileInfo)
         {
             try
             {
+                if (_currentMidiFileInfo != null
+                    && _currentMidiFileInfo.FullName.Equals(midiFileInfo.FullName))
+                {
+                    return _currentMidiFile;
+                }
+
+                _isLoaded = false;
                 await Task.Run(() =>
                 {
                     _currentMidiFile = new MidiFile(midiFileInfo.FullName, false);
-                    Console.WriteLine($"MIDI文件格式: {_currentMidiFile.FileFormat}");
-                    Console.WriteLine($"轨道数: {_currentMidiFile.Tracks}");
-                    Console.WriteLine($"时间分辨率: {_currentMidiFile.DeltaTicksPerQuarterNote} ticks/四分音符");
+                    _currentMidiFileInfo = midiFileInfo;
 
+                    _isLoaded = true;
+                    OnMidiFileLoaded?.Invoke(_currentMidiFile);
+                    Debug.WriteLine($"MIDI文件格式: {_currentMidiFile.FileFormat}");
+                    Debug.WriteLine($"轨道数: {_currentMidiFile.Tracks}");
+                    Debug.WriteLine($"时间分辨率: {_currentMidiFile.DeltaTicksPerQuarterNote} ticks/四分音符");
+                });
+                return _currentMidiFile;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        public async Task PlayMidiFile(double delayMs = 0)
+        {
+            try
+            {
+                if (_currentMidiFile == null || !_isLoaded)
+                {
+                    throw new Exception("当前MIDI文件为空");
+                }
+
+                await Task.Run(() =>
+                {
                     if (MidiOut.NumberOfDevices == 0)
                     {
-                        Console.WriteLine("没有找到MIDI输出设备!");
+                        Debug.WriteLine("没有找到MIDI输出设备!");
                         return;
                     }
 
                     _midiOut = new MidiOut(0);
-                    Console.WriteLine($"使用MIDI设备: {MidiOut.DeviceInfo(0).ProductName}");
+                    Debug.WriteLine($"使用MIDI设备: {MidiOut.DeviceInfo(0).ProductName}");
 
-                    // 创建播放器（内部已计算总时长）
                     _midiPlayer = new MidiPlayer(_currentMidiFile, _midiOut);
-
-                    // 订阅播放完成事件
                     _midiPlayer.OnPlaybackCompleted += HandlePlaybackCompleted;
 
+                    // 设置时间偏移，让 CurrentTimeMs 从 -delayMs 开始
+                    _midiPlayer.SetTimeOffset(-delayMs);
+
+                    // 立即启动播放器
                     _midiPlayer.Start();
 
                     OnMidiFilePlaying?.Invoke(true);
-
-                    // 启动进度更新定时器
+                    OnMidiPlaybackStarted?.Invoke(delayMs);
                     StartProgressTimer();
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Debug.WriteLine(ex.Message);
             }
         }
 
@@ -136,17 +175,10 @@ namespace NoteFluid.Core.Services
             _midiPlayer.NoteOff(midiNote);
         }
 
-        public async Task PlayNoteAsync(MidiPlayer midiPlayer, int midiNote)
-        {
-            if (midiPlayer == null) return;
-
-            await midiPlayer.PlayNoteAsync(midiNote);
-        }
-
         private void StartProgressTimer()
         {
             StopProgressTimer();
-            _progressTimer = new Timer(UpdateProgress, null, 0, 100);
+            _progressTimer = new Timer(UpdateProgress, null, 0, 16);
         }
 
         private void StopProgressTimer()
@@ -196,41 +228,11 @@ namespace NoteFluid.Core.Services
             // 通知播放状态为 false
             OnMidiFilePlaying?.Invoke(false);
 
-            // 清理资源（可选，取决于你的需求）
-            // 如果你想让用户能够重新播放同一个文件，就不要清理
             _midiPlayer?.Dispose();
             _midiPlayer = null;
             _midiOut?.Dispose();
             _midiOut = null;
         }
 
-    }
-
-    public static class TrackColorHelper
-    {
-        private static readonly Color[] TrackColors =
-        [
-            Color.FromRgb(65, 105, 225),  // Royal Blue
-            Color.FromRgb(50, 205, 50),   // Lime Green
-            Color.FromRgb(255, 69, 0),    // Red Orange
-            Color.FromRgb(138, 43, 226),  // Blue Violet
-            Color.FromRgb(255, 215, 0),   // Gold
-            Color.FromRgb(0, 206, 209),   // Dark Turquoise
-            Color.FromRgb(218, 112, 214), // Orchid
-            Color.FromRgb(255, 127, 80)   // Coral
-        ];
-
-        public static Color GetTrackColor(int trackIndex)
-        {
-            return TrackColors[trackIndex % TrackColors.Length];
-        }
-    }
-
-    public static class TimeSpanExtensions
-    {
-        public static TimeSpan FromMicroseconds(long microseconds)
-        {
-            return TimeSpan.FromTicks(microseconds * 10);
-        }
     }
 }

@@ -5,10 +5,9 @@ namespace NoteFluid.Core.Utilities
 {
     public class MidiInstrumentReader
     {
-        public static List<InstrumentInfo> GetTrackInstruments(string filePath)
+        public static List<InstrumentInfo> GetTrackInstruments(MidiFile midiFile)
         {
             var instruments = new List<InstrumentInfo>();
-            var midiFile = new MidiFile(filePath, false);
 
             for (int track = 0; track < midiFile.Tracks; track++)
             {

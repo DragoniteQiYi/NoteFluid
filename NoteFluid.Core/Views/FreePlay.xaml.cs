@@ -73,6 +73,7 @@ namespace NoteFluid.Core.Views
 
                     // 启动增长动画
                     waterfallBar.StartGrowing(WaterfallCanvas.ActualHeight);
+                    // waterfallBar.StartFalling(WaterfallCanvas.ActualHeight, 100);
                 }
             });
         }
@@ -89,17 +90,6 @@ namespace NoteFluid.Core.Views
                 }
             });
         }
-
-        // 清理所有瀑布条
-        private void CleanupWaterfalls()
-        {
-            foreach (var bar in _activeWaterfalls.Values)
-            {
-                bar.Release();
-            }
-            _activeWaterfalls.Clear();
-        }
-
 
         private void BackToMainMenuButton_Click(object sender, RoutedEventArgs e)
         {

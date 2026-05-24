@@ -1,9 +1,9 @@
+using NAudio.Midi;
 using NoteFluid.Core.Configs;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Utilities;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Windows.Media;
 
 namespace NoteFluid.Core.Services
@@ -18,7 +18,12 @@ namespace NoteFluid.Core.Services
         /// <summary>
         /// 当前加载的MIDI文件信息
         /// </summary>
-        public MidiFileInfo? CurrentMidiFile { get; private set; }
+        public MidiFileInfo? CurrentMidiFileInfo { get; private set; }
+
+        /// <summary>
+        /// 当前加载的MIDI文件
+        /// </summary>
+        public MidiFile? CurrentMidiFile { get; private set; }
 
         /// <summary>
         /// 当前MIDI文件的乐器信息列表
@@ -29,6 +34,11 @@ namespace NoteFluid.Core.Services
         /// 当前MIDI文件的配置
         /// </summary>
         public MidiFileConfig? CurrentConfig { get; private set; }
+
+        /// <summary>
+        /// 记录所有当前MIDI文件音符事件
+        /// </summary>
+        public List<MidiNoteEvent>? NoteEvents { get; private set; }
 
         /// <summary>
         /// 当前文件的唯一标识Key
@@ -152,13 +162,16 @@ namespace NoteFluid.Core.Services
         /// <summary>
         /// 加载MIDI文件并初始化乐器信息
         /// </summary>
-        public void LoadMidiFile(MidiFileInfo midiFileInfo)
+        public void LoadMidiFile(MidiFileInfo midiFileInfo, MidiFile midiFile)
         {
-            CurrentMidiFile = midiFileInfo;
+            CurrentMidiFileInfo = midiFileInfo;
             CurrentFileKey = GenerateFileKey(midiFileInfo);
+            CurrentMidiFile = midiFile;
+
+            if (midiFile == null) return;
 
             // 读取完整的乐器信息（包括音符数等）
-            var instrumentList = MidiInstrumentReader.GetTrackInstruments(midiFileInfo.FilePath);
+            var instrumentList = MidiInstrumentReader.GetTrackInstruments(midiFile);
 
             // 更新MidiFileInfo的乐器列表
             midiFileInfo.Instruments = instrumentList;
@@ -523,10 +536,15 @@ namespace NoteFluid.Core.Services
         /// </summary>
         public void Clear()
         {
-            CurrentMidiFile = null;
+            CurrentMidiFileInfo = null;
             CurrentConfig = null;
             CurrentFileKey = null;
             InstrumentInfos.Clear();
+        }
+
+        private void HandleMidiFileLoaded(MidiFile midiFile)
+        {
+            
         }
     }
 }

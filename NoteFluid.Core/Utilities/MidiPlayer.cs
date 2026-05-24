@@ -19,6 +19,9 @@ namespace NoteFluid.Core.Utilities
         private int[] _activeNotes;
         private double _totalDurationMs;
         private List<TempoEvent> _tempoChanges;
+        private double _timeOffsetMs = 0;
+
+
 
         public bool IsPlaying => _isPlaying;
         public bool IsPaused => _isPaused;
@@ -118,6 +121,8 @@ namespace NoteFluid.Core.Utilities
             _isPlaying = true;
             _isPaused = false;
             _stopwatch?.Restart();
+
+
 
             Console.WriteLine($"[MidiPlayer] 状态设置完成 - isPlaying={_isPlaying}, isPaused={_isPaused}");
 
@@ -292,20 +297,6 @@ namespace NoteFluid.Core.Utilities
             }
         }
 
-        /// <summary>
-        /// 异步播放指定音高的音符
-        /// </summary>
-        /// <param name="midiNote">MIDI音符编号(21-108)</param>
-        /// <param name="durationMs">持续时间(毫秒)</param>
-        /// <param name="velocity">力度(0-127)，默认100</param>
-        /// <param name="channel">MIDI通道(1-16)，默认1</param>
-        public async Task PlayNoteAsync(int midiNote, int durationMs = 500, int velocity = 100, int channel = 1)
-        {
-            NoteOn(midiNote, velocity, channel);
-            await Task.Delay(durationMs);
-            NoteOff(midiNote, channel);
-        }
-
         private double CalculateMsFromTick(int tick)
         {
             if (tick <= 0) return 0;
@@ -460,7 +451,7 @@ namespace NoteFluid.Core.Utilities
                 return;
             }
 
-            double elapsed = _pausedElapsedMs + _stopwatch.Elapsed.TotalMilliseconds;
+            double elapsed = _pausedElapsedMs + _stopwatch.Elapsed.TotalMilliseconds + _timeOffsetMs;
             int targetTick = CalculateTickFromMs(elapsed);
 
             Console.WriteLine($"[MidiPlayer] elapsed={elapsed:F2}ms, targetTick={targetTick}");
@@ -564,6 +555,11 @@ namespace NoteFluid.Core.Utilities
             if (_isPaused) return _pausedElapsedMs;
             if (!_isPlaying) return _pausedElapsedMs;  // 即使停止也返回最后的位置
             return _pausedElapsedMs + _stopwatch.Elapsed.TotalMilliseconds;
+        }
+
+        public void SetTimeOffset(double offset)
+        {
+            _timeOffsetMs = offset;
         }
 
         public void Dispose()

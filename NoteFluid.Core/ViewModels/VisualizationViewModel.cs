@@ -18,7 +18,7 @@ namespace NoteFluid.Core.ViewModels
         private readonly NavigateService _navigateService;
         private readonly ConfigService _configService;
         private readonly MidiService _midiService;
-        private readonly FileService _fileService;
+        private readonly WaterfallService _waterfallService;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -52,12 +52,12 @@ namespace NoteFluid.Core.ViewModels
 
         public VisualizationViewModel(NavigateService navigateService,
             ConfigService configService, MidiService midiService,
-            FileService fileService)
+            WaterfallService waterfallService)
         {
             _navigateService = navigateService;
             _configService = configService;
             _midiService = midiService;
-            _fileService = fileService;
+            _waterfallService = waterfallService;
 
             PianoKeys = [];
             WhiteKeys = [];
@@ -74,6 +74,7 @@ namespace NoteFluid.Core.ViewModels
         }
 
         // 生成所有钢琴键数据
+        // 生成所有钢琴键数据
         public void GeneratePianoKeys(double availableWidth)
         {
             if (availableWidth <= 0) availableWidth = 1000;
@@ -82,8 +83,9 @@ namespace NoteFluid.Core.ViewModels
             WhiteKeys.Clear();
             BlackKeys.Clear();
 
-            double whiteKeyWidth = availableWidth / WHITE_KEY_COUNT;
-            double blackKeyWidth = whiteKeyWidth * 0.6;
+            double whiteKeySpacing = availableWidth / WHITE_KEY_COUNT;  // 白键间距
+            double whiteKeyWidth = whiteKeySpacing * 0.96;  // 白键实际宽度（留微小间隙）
+            double blackKeyWidth = whiteKeySpacing * 0.6;
 
             if (_configService?.ConfigData?.Visualization != null)
             {
@@ -112,9 +114,9 @@ namespace NoteFluid.Core.ViewModels
                 if (!isBlack)
                 {
                     // 白键
-                    key.Width = whiteKeyWidth;
+                    key.Width = whiteKeyWidth;  // 使用实际宽度
                     key.Height = BASE_WHITE_KEY_HEIGHT;
-                    key.X = whiteKeyIndex * whiteKeyWidth;
+                    key.X = whiteKeyIndex * whiteKeySpacing + (whiteKeySpacing - whiteKeyWidth) / 2;  // 在间距内居中
                     key.Y = 5;
 
                     if (ShowPitchName)
@@ -130,7 +132,7 @@ namespace NoteFluid.Core.ViewModels
                     // 黑键
                     key.Width = blackKeyWidth;
                     key.Height = BASE_BLACK_KEY_HEIGHT;
-                    key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeyWidth, blackKeyWidth);
+                    key.X = CalculateBlackKeyPosition(whiteKeyIndex, noteName, whiteKeySpacing, blackKeyWidth);
                     key.Y = 5;
 
                     if (ShowPitchName)
@@ -156,7 +158,7 @@ namespace NoteFluid.Core.ViewModels
         {
             pianoCanvas.Children.Clear();
 
-            double availableWidth = actualWidth;
+            double availableWidth = actualWidth - 40;
             if (availableWidth <= 0) availableWidth = 1000;
 
             GeneratePianoKeys(availableWidth);
@@ -181,12 +183,6 @@ namespace NoteFluid.Core.ViewModels
                 Canvas.SetZIndex(keyBorder, blackKey.ZIndex);
                 pianoCanvas.Children.Add(keyBorder);
             }
-        }
-
-        public async Task PlayMidiFile()
-        {
-            var currentFile = _fileService.SelectedFile;
-            await _midiService.PlayMidiFile(currentFile);
         }
 
         // 创建白键边框（添加按下/释放事件）
@@ -395,6 +391,18 @@ namespace NoteFluid.Core.ViewModels
             return border;
         }
 
+        public void PlayMidiFile(Canvas waterfallCanvas, Canvas pianoCanvas)
+        {
+            _waterfallService.SetVisualizationCanvas(waterfallCanvas, pianoCanvas, PianoKeys);
+            _waterfallService.LoadMidiFile(_midiService.CurrentMidiFile);
+            // 1. 计算延迟
+            double delayMs = _waterfallService.CalculateDelayMs();
+            // 2. 启动瀑布流
+            _waterfallService.Start(delayMs);
+
+            //await _midiService.PlayMidiFile(delayMs);
+        }
+
         // 按键按下事件处理 - 发送 NoteOn 播放音符
         public async void PressKey(int midiNote)
         {
@@ -429,6 +437,7 @@ namespace NoteFluid.Core.ViewModels
         private void HandleProgressValueChanged(TimeSpan currentTime, TimeSpan totalTime)
         {
             _progressValue = currentTime / totalTime * 100;
+            //_waterfallService.UpdateCurrentTime(currentTime.TotalMilliseconds);
             OnPropertyChanged(nameof(ProgressValue));
         }
 
@@ -498,6 +507,8 @@ namespace NoteFluid.Core.ViewModels
         public void Dispose()
         {
             _midiService.OnProgressChanged -= HandleProgressValueChanged;
+
+            _waterfallService.Clear();
         }
     }
 }

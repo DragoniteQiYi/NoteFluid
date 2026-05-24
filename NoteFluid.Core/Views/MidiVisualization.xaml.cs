@@ -35,10 +35,10 @@ namespace NoteFluid.Core.Views
         }
 
         // 当页面加载完成时初始化钢琴键
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             ResetKeyboard();
-            await _viewModel.PlayMidiFile();
+            _viewModel.PlayMidiFile(WaterfallCanvas, PianoCanvas);
         }
 
         private void PianoKey_Click(object sender, RoutedEventArgs e)
