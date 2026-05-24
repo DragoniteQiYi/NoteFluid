@@ -21,7 +21,6 @@ namespace NoteFluid.Core.ViewModels
         private readonly FileService _fileService;
         private readonly VisualizationService _visualizationService;
         private readonly MidiService _midiService;
-        private readonly WaterfallService _waterfallService;
 
         /// <summary>
         /// 当前选中的MIDI文件
@@ -59,14 +58,12 @@ namespace NoteFluid.Core.ViewModels
             NavigateService navigateService,
             FileService fileService,
             VisualizationService visualizationService,
-            MidiService midiService,
-            WaterfallService waterfallService)
+            MidiService midiService)
         {
             _navigateService = navigateService;
             _fileService = fileService;
             _visualizationService = visualizationService;
             _midiService = midiService;
-            _waterfallService = waterfallService;
         }
 
         /// <summary>
@@ -107,7 +104,7 @@ namespace NoteFluid.Core.ViewModels
 
                 // 委托VisualizationService加载和处理所有数据
                 _visualizationService.LoadMidiFile(MidiFileInfo, midiFile);
-                // 委托WaterfallService加载所有音符事件
+                _midiService.SetInstruments(InstrumentInfos);
 
                 MidiFileInfo = _visualizationService.CurrentMidiFileInfo;
 

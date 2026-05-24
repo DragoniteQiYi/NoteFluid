@@ -31,7 +31,7 @@ namespace NoteFluid.Core.Views
 
         private void BackToFileListButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.NavigateTo("FileList");
+            _viewModel.NavigateTo("Instruments");
         }
 
         // 当页面加载完成时初始化钢琴键

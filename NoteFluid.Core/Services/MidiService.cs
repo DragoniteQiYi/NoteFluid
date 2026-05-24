@@ -1,6 +1,7 @@
 ﻿using NAudio.Midi;
 using NoteFluid.Core.Models;
 using NoteFluid.Core.Utilities;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 
@@ -21,6 +22,7 @@ namespace NoteFluid.Core.Services
         private MidiOut? _midiOut;
         private Timer? _progressTimer;
         private bool _isLoaded;
+        private ObservableCollection<InstrumentInfo>? _instrumentInfos;
 
         public double CurrentTimeMs => _midiPlayer?.CurrentTimeMs ?? 0;
         public bool IsPlaying => _midiPlayer?.IsPlaying ?? false;
@@ -77,7 +79,7 @@ namespace NoteFluid.Core.Services
                     _midiOut = new MidiOut(0);
                     Debug.WriteLine($"使用MIDI设备: {MidiOut.DeviceInfo(0).ProductName}");
 
-                    _midiPlayer = new MidiPlayer(_currentMidiFile, _midiOut);
+                    _midiPlayer = new MidiPlayer(_currentMidiFile, _midiOut, _instrumentInfos);
                     _midiPlayer.OnPlaybackCompleted += HandlePlaybackCompleted;
 
                     // 设置时间偏移，让 CurrentTimeMs 从 -delayMs 开始
@@ -175,6 +177,11 @@ namespace NoteFluid.Core.Services
             _midiPlayer.NoteOff(midiNote);
         }
 
+        public void SetInstruments(ObservableCollection<InstrumentInfo> instrumentInfos)
+        {
+            _instrumentInfos = instrumentInfos;
+        }
+
         private void StartProgressTimer()
         {
             StopProgressTimer();
@@ -197,12 +204,6 @@ namespace NoteFluid.Core.Services
                 var totalTime = TimeSpan.FromMilliseconds(_midiPlayer.TotalDurationMs);
 
                 OnProgressChanged?.Invoke(currentTime, totalTime);
-
-                //// 自动停止
-                //if (currentTime >= totalTime && _midiPlayer.IsPlaying)
-                //{
-                //    StopMidiFile();
-                //}
             }
             catch
             {

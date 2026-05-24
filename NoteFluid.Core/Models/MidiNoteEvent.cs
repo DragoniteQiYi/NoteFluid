@@ -36,6 +36,8 @@ namespace NoteFluid.Core.Models
 
         public bool IsVisible {  get; set; }
 
+        public bool IsMuted { get; set; }
+
         /// <summary>音符对应的颜色</summary>
         public Color Color { get; set; }
     }

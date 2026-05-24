@@ -1,6 +1,7 @@
 ﻿using NAudio.Midi;
+using NoteFluid.Core.Models;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Threading.Channels;
 
 namespace NoteFluid.Core.Utilities
 {
@@ -20,8 +21,8 @@ namespace NoteFluid.Core.Utilities
         private double _totalDurationMs;
         private List<TempoEvent> _tempoChanges;
         private double _timeOffsetMs = 0;
-
-
+        private HashSet<(int, int)> _mutedInstuments;
+        private Dictionary<NoteEvent, int> _noteEventPatches;
 
         public bool IsPlaying => _isPlaying;
         public bool IsPaused => _isPaused;
@@ -35,10 +36,12 @@ namespace NoteFluid.Core.Utilities
             _midiOut = midiOut;
         }
 
-        public MidiPlayer(MidiFile midiFile, MidiOut midiOut)
+        public MidiPlayer(MidiFile midiFile, MidiOut midiOut, ObservableCollection<InstrumentInfo> 
+            instrumentInfos)
         {
             _midiFile = midiFile;
             _midiOut = midiOut;
+            _mutedInstuments = [];
 
             Console.WriteLine($"[MidiPlayer] 构造函数开始");
             Console.WriteLine($"[MidiPlayer] DeltaTicksPerQuarterNote: {midiFile.DeltaTicksPerQuarterNote}");
@@ -48,6 +51,19 @@ namespace NoteFluid.Core.Utilities
             int metaEventCount = 0;
             int tempoEventCount = 0;
 
+            // 建立通道到当前Patch的映射
+            var channelPatchMap = new Dictionary<int, int>();
+            // 存储每个NoteEvent对应的Patch（因为同一通道可能中途换乐器）
+            var noteEventPatches = new Dictionary<NoteEvent, int>();
+
+            foreach (InstrumentInfo instrumentInfo in instrumentInfos)
+            {
+                if (instrumentInfo.IsMuted)
+                {
+                    _mutedInstuments?.Add((instrumentInfo.PatchNumber, instrumentInfo.Channel));
+                }
+            }
+
             foreach (var track in midiFile.Events)
             {
                 foreach (var midiEvent in track)
@@ -56,6 +72,19 @@ namespace NoteFluid.Core.Utilities
                     {
                         tempoEventCount++;
                         Console.WriteLine($"[MidiPlayer] 找到TempoEvent: {((TempoEvent)midiEvent).MicrosecondsPerQuarterNote}us/qn");
+                    }
+
+                    // 更新通道的当前Patch
+                    if (midiEvent is PatchChangeEvent patchChange)
+                    {
+                        channelPatchMap[patchChange.Channel] = patchChange.Patch;
+                    }
+
+                    // 为NoteEvent记录当前的Patch
+                    if (midiEvent is NoteEvent noteEvent)
+                    {
+                        int currentPatch = channelPatchMap.TryGetValue(noteEvent.Channel, out int p) ? p : 0;
+                        noteEventPatches[noteEvent] = currentPatch;
                     }
 
                     if (midiEvent.CommandCode == MidiCommandCode.MetaEvent)
@@ -73,6 +102,8 @@ namespace NoteFluid.Core.Utilities
                     }
                 }
             }
+            // 存储映射关系供ProcessMidiEvent使用
+            _noteEventPatches = noteEventPatches;
 
             _events.Sort((a, b) => a.AbsoluteTime.CompareTo(b.AbsoluteTime));
 
@@ -85,14 +116,14 @@ namespace NoteFluid.Core.Utilities
                 .OfType<TempoEvent>()
                 .OrderBy(e => e.AbsoluteTime)];
 
-            Console.WriteLine($"[MidiPlayer] 缓存的TempoChanges数量: {_tempoChanges.Count}");
+            Debug.WriteLine($"[MidiPlayer] 缓存的TempoChanges数量: {_tempoChanges.Count}");
 
             _activeNotes = new int[128];
             _stopwatch = new Stopwatch();
             _totalDurationMs = CalculateTotalDurationMs();
 
-            Console.WriteLine($"[MidiPlayer] 总时长: {_totalDurationMs}ms");
-            Console.WriteLine($"[MidiPlayer] 构造函数完成");
+            Debug.WriteLine($"[MidiPlayer] 总时长: {_totalDurationMs}ms");
+            Debug.WriteLine($"[MidiPlayer] 构造函数完成");
         }
         public void Start()
         {
@@ -488,6 +519,21 @@ namespace NoteFluid.Core.Utilities
 
             try
             {
+                // ✅ 对NoteEvent进行静音检查
+                if (midiEvent is NoteEvent noteEvent)
+                {
+                    // 获取该音符所属的乐器Patch
+                    int patch = _noteEventPatches.TryGetValue(noteEvent, out int p) ? p : 0;
+
+                    // 判断是否在静音列表中
+                    if (_mutedInstuments.Contains((patch, noteEvent.Channel)))
+                    {
+                        // 静音：不发送MIDI消息，但要更新activeNotes计数
+                        // 这样AllNotesOff时不会出错
+                        return;
+                    }
+                }
+
                 if (midiEvent is NoteOnEvent noteOn)
                 {
                     if (noteOn.Velocity > 0)
@@ -503,7 +549,7 @@ namespace NoteFluid.Core.Utilities
                         _activeNotes[noteOn.NoteNumber] = Math.Max(0, _activeNotes[noteOn.NoteNumber] - 1);
 
                         // 直接利用 NoteOnEvent 的 OffEvent 属性，或者用相同通道和音符构建正确的 Note Off 消息
-                        // 方法一（推荐）：直接发送原有的 Velocity=0 消息，标准的 Note On with Velocity 0 就是 Note Off
+                        // 直接发送原有的 Velocity=0 消息，标准的 Note On with Velocity 0 就是 Note Off
                         int noteOffMsg = noteOn.GetAsShortMessage(); // 这正是 Velocity=0 的 Note On，等同于 Note Off
                         _midiOut.Send(noteOffMsg);
                     }

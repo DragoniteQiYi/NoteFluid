@@ -36,11 +36,6 @@ namespace NoteFluid.Core.Services
         public MidiFileConfig? CurrentConfig { get; private set; }
 
         /// <summary>
-        /// 记录所有当前MIDI文件音符事件
-        /// </summary>
-        public List<MidiNoteEvent>? NoteEvents { get; private set; }
-
-        /// <summary>
         /// 当前文件的唯一标识Key
         /// </summary>
         public string? CurrentFileKey { get; private set; }
@@ -540,11 +535,6 @@ namespace NoteFluid.Core.Services
             CurrentConfig = null;
             CurrentFileKey = null;
             InstrumentInfos.Clear();
-        }
-
-        private void HandleMidiFileLoaded(MidiFile midiFile)
-        {
-            
         }
     }
 }

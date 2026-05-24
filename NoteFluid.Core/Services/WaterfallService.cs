@@ -24,6 +24,7 @@ namespace NoteFluid.Core.Services
 
         // MIDI音符事件列表（已排序）
         private List<MidiNoteEvent> _noteEvents = [];
+        private int _noteIdCounter = 0;
 
         // 当前活跃的瀑布条（按音符编号索引）
         private readonly Dictionary<int, WaterfallBar> _activeBars = [];
@@ -189,64 +190,77 @@ namespace NoteFluid.Core.Services
                 }
             }
 
-            // 按绝对时间排序所有事件
             allEvents.Sort((a, b) => a.AbsoluteTime.CompareTo(b.AbsoluteTime));
 
-            // 使用字典跟踪每个轨道每个通道的挂起音符
-            var pendingNotes = new Dictionary<(int Track, int Channel, int NoteNumber), (long AbsoluteTime, int PatchNumber)>();
+            // 使用字典的字典：Track -> Channel -> NoteNumber -> Queue of pending notes
+            var pendingNotes = new Dictionary<int, Dictionary<int, Dictionary<int, Queue<(long StartTick, int PatchNumber, int NoteId)>>>>();
 
             foreach (var (absoluteTime, trackIdx, midiEvent) in allEvents)
             {
                 if (midiEvent is NoteOnEvent noteOn)
                 {
-                    var key = (trackIdx, noteOn.Channel, noteOn.NoteNumber);
-
                     if (noteOn.Velocity > 0)
                     {
                         // 音符开始
                         int patchNumber = GetPatchAtTime(programChanges, noteOn.Channel, absoluteTime);
-                        pendingNotes[key] = (absoluteTime, patchNumber);
+                        int noteId = _noteIdCounter++;
+
+                        // 确保嵌套字典存在
+                        if (!pendingNotes.TryGetValue(trackIdx, out var trackDict))
+                        {
+                            trackDict = new Dictionary<int, Dictionary<int, Queue<(long, int, int)>>>();
+                            pendingNotes[trackIdx] = trackDict;
+                        }
+                        if (!trackDict.TryGetValue(noteOn.Channel, out var channelDict))
+                        {
+                            channelDict = new Dictionary<int, Queue<(long, int, int)>>();
+                            trackDict[noteOn.Channel] = channelDict;
+                        }
+                        if (!channelDict.TryGetValue(noteOn.NoteNumber, out var noteQueue))
+                        {
+                            noteQueue = new Queue<(long, int, int)>();
+                            channelDict[noteOn.NoteNumber] = noteQueue;
+                        }
+
+                        noteQueue.Enqueue((absoluteTime, patchNumber, noteId));
                     }
                     else
                     {
-                        // Velocity 0 表示音符结束
-                        if (pendingNotes.TryGetValue(key, out var noteInfo))
-                        {
-                            var noteEvent = CreateNoteEvent(
-                                noteOn.NoteNumber, noteOn.Channel, noteInfo.PatchNumber,
-                                noteInfo.AbsoluteTime, absoluteTime, trackIdx,
-                                tempoEvents, midiFile.DeltaTicksPerQuarterNote);
-                            _noteEvents.Add(noteEvent);
-                            pendingNotes.Remove(key);
-                        }
+                        // Velocity 0 - Note Off
+                        ProcessNoteOff(trackIdx, noteOn.Channel, noteOn.NoteNumber,
+                                     absoluteTime, pendingNotes, tempoEvents, midiFile.DeltaTicksPerQuarterNote);
                     }
                 }
-                else if (midiEvent.CommandCode == MidiCommandCode.NoteOff)
+                else if (midiEvent.CommandCode == MidiCommandCode.NoteOff && midiEvent is NoteEvent noteOff)
                 {
-                    if (midiEvent is NoteEvent noteOff)
-                    {
-                        var key = (trackIdx, noteOff.Channel, noteOff.NoteNumber);
-                        if (pendingNotes.TryGetValue(key, out var noteInfo))
-                        {
-                            var noteEvent = CreateNoteEvent(
-                                noteOff.NoteNumber, noteOff.Channel, noteInfo.PatchNumber,
-                                noteInfo.AbsoluteTime, absoluteTime, trackIdx,
-                                tempoEvents, midiFile.DeltaTicksPerQuarterNote);
-                            _noteEvents.Add(noteEvent);
-                            pendingNotes.Remove(key);
-                        }
-                    }
+                    ProcessNoteOff(trackIdx, noteOff.Channel, noteOff.NoteNumber,
+                                 absoluteTime, pendingNotes, tempoEvents, midiFile.DeltaTicksPerQuarterNote);
                 }
             }
 
             // 处理剩余未关闭的音符
-            foreach (var kvp in pendingNotes)
+            foreach (var trackKvp in pendingNotes)
             {
-                var noteEvent = CreateNoteEvent(
-                    kvp.Key.NoteNumber, kvp.Key.Channel, kvp.Value.PatchNumber,
-                    kvp.Value.AbsoluteTime, kvp.Value.AbsoluteTime + midiFile.DeltaTicksPerQuarterNote,
-                    kvp.Key.Track, tempoEvents, midiFile.DeltaTicksPerQuarterNote);
-                _noteEvents.Add(noteEvent);
+                int track = trackKvp.Key;
+                foreach (var channelKvp in trackKvp.Value)
+                {
+                    int channel = channelKvp.Key;
+                    foreach (var noteKvp in channelKvp.Value)
+                    {
+                        int noteNumber = noteKvp.Key;
+                        var queue = noteKvp.Value;
+
+                        while (queue.Count > 0)
+                        {
+                            var pending = queue.Dequeue();
+                            var noteEvent = CreateNoteEvent(
+                                noteNumber, channel, pending.PatchNumber,
+                                pending.StartTick, pending.StartTick + midiFile.DeltaTicksPerQuarterNote,
+                                track, tempoEvents, midiFile.DeltaTicksPerQuarterNote);
+                            _noteEvents.Add(noteEvent);
+                        }
+                    }
+                }
             }
 
             _noteEvents.Sort((a, b) => a.StartTimeMs.CompareTo(b.StartTimeMs));
@@ -537,6 +551,39 @@ namespace NoteFluid.Core.Services
                     if (topPosition > _canvasHeight)
                     {
                         bar.Deactivate();
+                    }
+                }
+            }
+        }
+
+        // 提取 Note Off 处理逻辑
+        private void ProcessNoteOff(int trackIdx, int channel, int noteNumber, long absoluteTime,
+            Dictionary<int, Dictionary<int, Dictionary<int, Queue<(long StartTick, int PatchNumber, int NoteId)>>>> pendingNotes,
+            List<TempoEvent> tempoEvents, int deltaTicksPerQuarterNote)
+        {
+            if (!pendingNotes.TryGetValue(trackIdx, out var trackDict)) return;
+            if (!trackDict.TryGetValue(channel, out var channelDict)) return;
+            if (!channelDict.TryGetValue(noteNumber, out var noteQueue) || noteQueue.Count == 0) return;
+
+            // 取出最早的一个待处理音符（FIFO）
+            var match = noteQueue.Dequeue();
+
+            var noteEvent = CreateNoteEvent(
+                noteNumber, channel, match.PatchNumber,
+                match.StartTick, absoluteTime, trackIdx,
+                tempoEvents, deltaTicksPerQuarterNote);
+            _noteEvents.Add(noteEvent);
+
+            // 清理空队列以节省内存
+            if (noteQueue.Count == 0)
+            {
+                channelDict.Remove(noteNumber);
+                if (channelDict.Count == 0)
+                {
+                    trackDict.Remove(channel);
+                    if (trackDict.Count == 0)
+                    {
+                        pendingNotes.Remove(trackIdx);
                     }
                 }
             }
