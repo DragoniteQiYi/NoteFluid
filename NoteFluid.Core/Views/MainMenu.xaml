@@ -226,7 +226,7 @@
                                          Foreground="{DynamicResource MaterialDesignBody}"
                                          VerticalAlignment="Center"
                                          Margin="0,0,8,0"/>
-                        <TextBlock Text="v1.0.1-Release"
+                        <TextBlock Text="v1.0.2-Release"
                            FontSize="14"
                            Foreground="{DynamicResource MaterialDesignBody}"
                            VerticalAlignment="Center"/>

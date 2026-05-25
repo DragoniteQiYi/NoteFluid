@@ -23,6 +23,7 @@ namespace NoteFluid.Core.Utilities
         private double _timeOffsetMs = 0;
         private HashSet<(int, int)> _mutedInstuments;
         private Dictionary<NoteEvent, int> _noteEventPatches;
+        private Dictionary<int, int> _initialChannelPatches;
 
         public bool IsPlaying => _isPlaying;
         public bool IsPaused => _isPaused;
@@ -125,6 +126,9 @@ namespace NoteFluid.Core.Utilities
             _stopwatch = new Stopwatch();
             _totalDurationMs = CalculateTotalDurationMs();
 
+            // 在收集完所有事件后，预计算每个通道的初始音色
+            _initialChannelPatches = CalculateInitialChannelPatches();
+
             Debug.WriteLine($"[MidiPlayer] 总时长: {_totalDurationMs}ms");
             Debug.WriteLine($"[MidiPlayer] 构造函数完成");
         }
@@ -147,6 +151,12 @@ namespace NoteFluid.Core.Utilities
             }
 
             Console.WriteLine($"[MidiPlayer] 从头开始播放");
+
+            foreach (var kvp in _initialChannelPatches)
+            {
+                var programChange = new PatchChangeEvent(0, kvp.Key, kvp.Value);
+                _midiOut.Send(programChange.GetAsShortMessage());
+            }
 
             StopInternal();
             _currentEventIndex = 0;
@@ -601,6 +611,24 @@ namespace NoteFluid.Core.Utilities
         public void SetTimeOffset(double offset)
         {
             _timeOffsetMs = offset;
+        }
+
+        private Dictionary<int, int> CalculateInitialChannelPatches()
+        {
+            var patches = new Dictionary<int, int>();
+
+            foreach (var midiEvent in _events)
+            {
+                if (midiEvent is PatchChangeEvent patchChange)
+                {
+                    if (!patches.ContainsKey(patchChange.Channel))
+                    {
+                        patches[patchChange.Channel] = patchChange.Patch;
+                    }
+                }
+            }
+
+            return patches;
         }
 
         public void Dispose()
