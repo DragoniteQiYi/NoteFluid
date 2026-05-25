@@ -56,11 +56,14 @@ namespace NoteFluid.Core.Utilities
             // 存储每个NoteEvent对应的Patch（因为同一通道可能中途换乐器）
             var noteEventPatches = new Dictionary<NoteEvent, int>();
 
-            foreach (InstrumentInfo instrumentInfo in instrumentInfos)
+            if (instrumentInfos != null)
             {
-                if (instrumentInfo.IsMuted)
+                foreach (InstrumentInfo instrumentInfo in instrumentInfos)
                 {
-                    _mutedInstuments?.Add((instrumentInfo.PatchNumber, instrumentInfo.Channel));
+                    if (instrumentInfo.IsMuted)
+                    {
+                        _mutedInstuments?.Add((instrumentInfo.PatchNumber, instrumentInfo.Channel));
+                    }
                 }
             }
 
@@ -519,53 +522,45 @@ namespace NoteFluid.Core.Utilities
 
             try
             {
+                // 先处理 PatchChange，确保音色状态正确
+                if (midiEvent is PatchChangeEvent patchChange)
+                {
+                    _midiOut.Send(patchChange.GetAsShortMessage());
+                    return;
+                }
+
                 // 对NoteEvent进行静音检查
                 if (midiEvent is NoteEvent noteEvent)
                 {
-                    // 获取该音符所属的乐器Patch
                     int patch = _noteEventPatches.TryGetValue(noteEvent, out int p) ? p : 0;
 
-                    // 判断是否在静音列表中
                     if (_mutedInstuments.Contains((patch, noteEvent.Channel)))
                     {
-                        // 静音：不发送MIDI消息，但要更新activeNotes计数
-                        // 这样AllNotesOff时不会出错
                         return;
                     }
                 }
 
+                // 处理 NoteOn
                 if (midiEvent is NoteOnEvent noteOn)
                 {
                     if (noteOn.Velocity > 0)
                     {
-                        // Note On
                         _activeNotes[noteOn.NoteNumber]++;
-                        int msg = noteOn.GetAsShortMessage();
-                        _midiOut.Send(msg);
+                        _midiOut.Send(noteOn.GetAsShortMessage());
                     }
                     else
                     {
-                        // Velocity=0 在 MIDI 标准中代表 Note Off
                         _activeNotes[noteOn.NoteNumber] = Math.Max(0, _activeNotes[noteOn.NoteNumber] - 1);
-
-                        // 直接利用 NoteOnEvent 的 OffEvent 属性，或者用相同通道和音符构建正确的 Note Off 消息
-                        // 直接发送原有的 Velocity=0 消息，标准的 Note On with Velocity 0 就是 Note Off
-                        int noteOffMsg = noteOn.GetAsShortMessage(); // 这正是 Velocity=0 的 Note On，等同于 Note Off
-                        _midiOut.Send(noteOffMsg);
+                        _midiOut.Send(noteOn.GetAsShortMessage());
                     }
                 }
                 else if (midiEvent.CommandCode == MidiCommandCode.NoteOff)
                 {
-                    // 这里假设是 NoteEvent，直接发送
                     if (midiEvent is NoteEvent noteOff)
                     {
                         _activeNotes[noteOff.NoteNumber] = Math.Max(0, _activeNotes[noteOff.NoteNumber] - 1);
                         _midiOut.Send(noteOff.GetAsShortMessage());
                     }
-                }
-                else if (midiEvent is PatchChangeEvent patchChange)
-                {
-                    _midiOut.Send(patchChange.GetAsShortMessage());
                 }
                 else if (midiEvent is ControlChangeEvent controlChange)
                 {
